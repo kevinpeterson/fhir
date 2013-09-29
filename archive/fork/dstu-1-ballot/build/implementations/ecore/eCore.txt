@@ -1,0 +1,1674 @@
+module _'FHIR.ecore'
+import ecore : 'http://www.eclipse.org/emf/2002/Ecore#/';
+
+package DataTypes : dt = 'http://hl7.org/fhir/datatypes'
+{
+}
+package Resources : res = 'http://hl7.org/fhir/resources'
+{
+  class Condition extends Resource           -- Use to record detailed information about conditions, problems or diagnoses recognized by a clinician. There are many uses including: recording a Diagnosis during an Encounter; populating a problem List or a Summary Statement, such as a Discharge Summary.
+  {
+    attribute subject : Resource;            -- Subject of this condition.
+    attribute encounter : Resource;          -- Encounter during which the condition was first asserted.
+    attribute asserter : Resource;           -- Person who takes responsibility for asserting the existence of the condition as part of the electronic record.
+    attribute dateAsserted : date;           -- Estimated or actual date the condition/problem/diagnosis was first detected/suspected.
+    attribute code : CodeableConcept;        -- Identification of the condition, problem or diagnosis.
+    attribute category : CodeableConcept;    -- A category assigned to the condition. E.g. finding | Condition | diagnosis | concern | condition.
+    attribute status : code;                 -- The clinical status of the condition.
+    attribute certainty : CodeableConcept;   -- The degree of confidence that this condition is correct.
+    attribute severity : CodeableConcept;    -- A subjective assessment of the severity of the condition as evaluated by the clinician.
+    attribute onset : ?;                     -- Estimated or actual date the condition began, in the opinion of the clinician.
+    attribute abatement : ?;                 -- The date or estimated date that the condition resolved or went into remission. This is called "abatement" because of the many overloaded connotations associated with "remission" or "resolution" - Conditions are never really resolved, but they can abate.
+    attribute stage : Condition_stage;       -- Clinical stage or grade of a condition. May include formal severity assessments.
+    attribute evidence : Condition_evidence; -- Supporting Evidence / manifestations that are the basis on which this condition is suspected or confirmed.
+    attribute location : Condition_location; -- The anatomical location where this condition manifests itself.
+    attribute relatedItem : Condition_relatedItem; -- Further conditions, problems, diagnoses, procedures or events that are related in some way to this condition, or the substance that caused/triggered this Condition.
+    attribute notes : String;                -- Additional information about the Condition. This is a general notes/comments entry  for description of the Condition, its diagnosis and prognosis.
+  }
+
+  class Condition_location                   -- The anatomical location where this condition manifests itself.
+  {
+    attribute code : CodeableConcept;        -- Code that identifies the structural location.
+    attribute detail : String;               -- Detailed anatomical location information.
+  }
+
+  class Condition_evidence                   -- Supporting Evidence / manifestations that are the basis on which this condition is suspected or confirmed.
+  {
+    attribute code : CodeableConcept;        -- A manifestation or symptom that led to the recording of this condition.
+    attribute detail : Resource;             -- Links to other relevant information, including pathology reports.
+  }
+
+  class Condition_relatedItem                -- Further conditions, problems, diagnoses, procedures or events that are related in some way to this condition, or the substance that caused/triggered this Condition.
+  {
+    attribute type : code;                   -- The type of relationship that this condition has to the related item.
+    attribute code : CodeableConcept;        -- Code that identifies the target of this relationship. The code takes the place of a detailed instance target.
+    attribute target : Resource;             -- Target of the relationship.
+  }
+
+  class Condition_stage                      -- Clinical stage or grade of a condition. May include formal severity assessments.
+  {
+    attribute summary : CodeableConcept;     -- A simple summary of the stage such as "Stage 3". The determination of the stage is disease-specific.
+    attribute assessment : Resource;         -- Reference to a formal record of the evidence on which the staging assessment is based.
+  }
+
+  class Supply extends Resource              -- A supply -  request and provision.
+  {
+    attribute name : CodeableConcept;        -- Category of supply.
+    attribute identifier : Identifier;       -- Unique identifier for this kind of supply.
+    attribute status : code;                 -- Status of the supply.
+    attribute orderedItem : Resource;        -- The item which was ordered.
+    attribute patient : Resource;            -- A link to a resource representing the person to whom the medication will be given.
+    attribute dispense : Supply_dispense;    -- Indicates the details of the dispense event such as the days supply and quantity of a supply dispensed.
+  }
+
+  class Supply_dispense                      -- Indicates the details of the dispense event such as the days supply and quantity of a supply dispensed.
+  {
+    attribute identifier : Identifier;       -- Identifier assigned by the dispensing facility.   This is an identifier assigned outside FHIR.
+    attribute status : code;                 -- A code specifying the state of the dispense event.
+    attribute type : CodeableConcept;        -- Indicates the type of dispensing event that is performed. Examples include: Trial Fill, Completion of Trial, Partial Fill, Emergency Fill, Samples, etc.
+    attribute quantity : Quantity;           -- The amount of supply that has been dispensed. Includes unit of measure.
+    attribute suppliedItem : Resource;       -- Identifies the medication or substance being dispensed. This is either a link to a resource representing the details of the medication or substance or a simple attribute carrying a code that identifies the medication from a known list of medications.
+    attribute supplier : Resource;           -- The individual reponsible for dispensing the medication.
+    attribute whenPrepared : Period;         -- The time the dispense event occurred.
+    attribute whenHandedOver : Period;       -- The time the dispense event occurred.
+    attribute destination : Resource;        -- Identification of the facility/location where the Supply was shipped to, as part of the dispense event.
+    attribute receiver : Resource;           -- Identifies the person who picked up the Supply.
+  }
+
+  class Organization extends Resource        -- A formally or informally recognized grouping of people or organizations formed for the purpose of achieving some form of collective action.  Includes companies, institutions, corporations, departments, community groups, healthcare practice groups, etc.
+  {
+    attribute identifier : Identifier;       -- Identifier for the organization that is used to identify the organization across multiple disparate systems.
+    attribute name : String;                 -- A name associated with the organization.
+    attribute type : CodeableConcept;        -- The kind of organization that this is.
+    attribute telecom : Contact;             -- A contact detail for the organization.
+    attribute address : Address;             -- An address for the organization.
+    attribute partOf : Resource;             -- The organization of which this organization forms a part.
+    attribute contact : Organization_contact; -- Contact for the organization for a certain purpose.
+    attribute active : boolean;              -- Whether the organization's record is still in active use.
+  }
+
+  class Organization_contact                 -- Contact for the organization for a certain purpose.
+  {
+    attribute purpose : CodeableConcept;     -- Indicates a purpose for which the contact can be reached.
+    attribute name : HumanName;              -- A name associated with the contact.
+    attribute telecom : Contact;             -- A contact detail (e.g. a telephone number or an email address) by which the party may be contacted.
+    attribute address : Address;             -- Visiting or postal addresses for the contact.
+    attribute gender : CodeableConcept;      -- Administrative Gender - the gender that the person is considered to have for administration and record keeping purposes.
+  }
+
+  class Group extends Resource               -- Represents a defined collection of entities that may be discussed or acted upon collectively but which are not expected to act collectively and are not formally or legally recognized.  I.e. A collection of entities that isn't an Organization.
+  {
+    attribute identifier : Identifier;       -- A unique business identifier for this group.
+    attribute type : code;                   -- Identifies the broad classification of the kind of resources the group includes.
+    attribute actual : boolean;              -- If true, indicates that the resource refers to a specific group of real individuals.  If false, the group defines a set of intended individuals.
+    attribute code : CodeableConcept;        -- Provides a specific type of resource the group includes.  E.g. "cow", "syringe", etc.
+    attribute name : String;                 -- A label assigned to the group for human identification and communication.
+    attribute quantity : integer;            -- A count of the number of resource instances that are part of the group.
+    attribute characteristic : Group_characteristic; -- Identifies the traits shared by members of the group.
+    attribute member : Resource;             -- Identifies the resource instances that are members of the group.
+  }
+
+  class Group_characteristic                 -- Identifies the traits shared by members of the group.
+  {
+    attribute type : CodeableConcept;        -- Identifies the kind of trait being asserted.
+    attribute value : ?;                     -- The value of the trait that holds (or does not hold - see 'exclude') for members of the group.
+    attribute exclude : boolean;             -- If true, indicates the characteristic is one that is NOT held by members of the group.
+  }
+
+  class ValueSet extends Resource            -- A value set specifies a set of codes drawn from one or more code systems.
+  {
+    attribute identifier : String;           -- The identifier that is used to identify this value set when it is referenced in a specification, model, design or an instance (should be globally unique OID, UUID, or URI).
+    attribute version : String;              -- The identifier that is used to identify this version of the value set when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the profile author manually and the value should be a timestamp.
+    attribute name : String;                 -- A free text natural language name describing the value set.
+    attribute publisher : String;            -- The name of the individual or organization that published the value set.
+    attribute telecom : Contact;             -- Contacts of the publisher to assist a user in finding and communicating with the publisher.
+    attribute description : String;          -- A free text natural language description of the use of the value set - reason for definition, conditions of use, etc.
+    attribute copyright : String;            -- A copyright statement relating to the value set and/or its contents.
+    attribute status : code;                 -- The status of the value set.
+    attribute experimental : boolean;        -- This valueset was authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.
+    attribute date : dateTime;               -- The date that the value set status was last changed.
+    attribute define : ValueSet_define;      -- When value set defines its own codes.
+    attribute compose : ValueSet_compose;    -- When value set includes codes from elsewhere.
+    attribute expansion : ValueSet_expansion; -- When value set is an expansion.
+  }
+
+  class ValueSet_compose                     -- When value set includes codes from elsewhere.
+  {
+    attribute import : uri;                  -- Includes the contents of the referenced value set as part of the contents of this value set.
+    attribute include : ValueSet_compose_include; -- Include one or more codes from a code system.
+    attribute exclude : ValueSet_compose_include; -- Exclude one or more codes from the value set.
+  }
+
+  class ValueSet_compose_include             -- Include one or more codes from a code system.
+  {
+    attribute system : uri;                  -- The code system from which the selected codes come from.
+    attribute version : String;              -- The version of the code system that the codes are selected from.
+    attribute code : code;                   -- Specifies a code or concept to be included or excluded.
+    attribute filter : ValueSet_compose_include_filter; -- Select concepts by specify a matching criteria based on the properties (including relationships) defined by the system. If multiple filters are specified, they must all be true.
+  }
+
+  class ValueSet_define                      -- When value set defines its own codes.
+  {
+    attribute system : uri;                  -- URI to identify the code system.
+    attribute caseSensitive : boolean;       -- If code comparison is case sensitive when codes within this systemare compared to each other.
+    attribute concept : ValueSet_define_concept; -- Concepts in the code system.
+  }
+
+  class ValueSet_define_concept              -- Concepts in the code system.
+  {
+    attribute code : code;                   -- Code that identifies concept.
+    attribute abstract : boolean;            -- If this code is not for use as a real concept.
+    attribute display : String;              -- Text to Display to the user.
+    attribute definition : String;           -- Formal Definition.
+    attribute concept : ValueSet_define_concept; -- Child Concepts (is-a / contains).
+  }
+
+  class ValueSet_compose_include_filter      -- Select concepts by specify a matching criteria based on the properties (including relationships) defined by the system. If multiple filters are specified, they must all be true.
+  {
+    attribute property : code;               -- A code that identifies a property defined in the code system.
+    attribute op : code;                     -- The kind of operation to perform as part of the filter criteria.
+    attribute value : code;                  -- The match value may be either a code defined by the system, or a string value which is used a regex match on the literal string of the property value.
+  }
+
+  class ValueSet_expansion                   -- When value set is an expansion.
+  {
+    attribute timestamp : instant;           -- Time valueset expansion happened.
+    attribute contains : ValueSet_expansion_contains; -- Codes in the value set.
+  }
+
+  class ValueSet_expansion_contains          -- Codes in the value set.
+  {
+    attribute system : uri;                  -- System value for the code.
+    attribute code : code;                   -- Code - if blank, this is not a choosable code.
+    attribute display : String;              -- User display for the concept.
+    attribute contains : ValueSet_expansion_contains; -- Codes contained in this concept.
+  }
+
+  class Coverage extends Resource            -- Financial instrument by which payment information for health care.
+  {
+    attribute issuer : Resource;             -- The program or plan underwriter or payor.
+    attribute period : Period;               -- Time period during which the coverage is in force. A missing start date indicates the start date isn't known, a missing end date means the coverage is continuing to be in force.
+    attribute type : Coding;                 -- The type of coverage: social program, medical plan, accident coverage (workers compensation, auto), group health.
+    attribute identifier : Identifier;       -- The main (and possibly only) identifier for the coverage - often referred to as a Subscriber Id, Certificate number or Personal Health Number or Case ID.
+    attribute group : Identifier;            -- Todo.
+    attribute plan : Identifier;             -- Identifies a style or collective of coverage issues by the underwriter, for example may be used to identify a class of coverage or employer group. May also be referred to as a Policy or Group ID.
+    attribute subplan : Identifier;          -- Identifies a sub-style or sub-collective of coverage issues by the underwriter, for example may be used to identify a specific employer group within a class of employers. May be referred to as a Section or Division ID.
+    attribute dependent : integer;           -- A unique identifier for a dependent under the coverage.
+    attribute sequence : integer;            -- An optional counter for a particular instance of the identified coverage which increments upon each renewal.
+    attribute subscriber : Coverage_subscriber; -- Planholder information.
+  }
+
+  class Coverage_subscriber                  -- Planholder information.
+  {
+    attribute name : HumanName;              -- The name of the PolicyHolder.
+    attribute address : Address;             -- The mailing address, typically home, of the PolicyHolder.
+    attribute birthdate : date;              -- The date of birth of the PolicyHolder.
+  }
+
+  class MedicationDispense extends Resource  -- Dispensing a medication to a named patient.  This includes a description of the supply provided and the instructions for administering the medication.
+  {
+    attribute identifier : Identifier;       -- Identifier assigned by the dispensing facility - this is an identifier assigned outside FHIR.
+    attribute status : code;                 -- A code specifying the state of the set of dispense events.
+    attribute patient : Resource;            -- A link to a resource representing the person to whom the medication will be given.
+    attribute dispenser : Resource;          -- The individual reponsible for dispensing the medication.
+    attribute authorizingPrescription : Resource; -- Indicates the medication order that is being dispensed against.
+    attribute dispense : MedicationDispense_dispense; -- Indicates the details of the dispense event such as the days supply and quantity of medication dispensed.
+    attribute substitution : MedicationDispense_substitution; -- Indicates whether or not substitution was made as part of the dispense.  In some cases substitution will be expected but doesn't happen, in other cases substitution is not expected but does happen.  This block explains what substitition did or did not happen and why.
+  }
+
+  class MedicationDispense_dispense          -- Indicates the details of the dispense event such as the days supply and quantity of medication dispensed.
+  {
+    attribute identifier : Identifier;       -- Identifier assigned by the dispensing facility.   This is an identifier assigned outside FHIR.
+    attribute status : code;                 -- A code specifying the state of the dispense event.
+    attribute type : CodeableConcept;        -- Indicates the type of dispensing event that is performed. Examples include: Trial Fill, Completion of Trial, Partial Fill, Emergency Fill, Samples, etc.
+    attribute quantity : Quantity;           -- The amount of medication that has been dispensed. Includes unit of measure.
+    attribute medication : Resource;         -- Identifies the medication being administered. This is either a link to a resource representing the details of the medication or a simple attribute carrying a code that identifies the medication from a known list of medications.
+    attribute whenPrepared : Period;         -- The time the dispense event occurred.
+    attribute whenHandedOver : Period;       -- The time the dispense event occurred.
+    attribute destination : Resource;        -- Identification of the facility/location where the medication was shipped to, as part of the dispense event.
+    attribute receiver : Resource;           -- Identifies the person who picked up the medication.
+    attribute dosage : MedicationDispense_dispense_dosage; -- Indicates how the medication is to be used by the patient.
+  }
+
+  class MedicationDispense_dispense_dosage   -- Indicates how the medication is to be used by the patient.
+  {
+    attribute additionalInstructions : ?;    -- Additional instructions such as "Swallow with plenty of water" which may or may not be coded.
+    attribute timing : ?;                    -- The timing schedule for giving the medication to the patient.  The Schedule data type allows many different expressions, for example.  "Every  8 hours"; "Three times a day"; "1/2 an hour before breakfast for 10 days from 23-Dec 2011:";  "15 Oct 2013, 17 Oct 2013 and 1 Nov 2013".
+    attribute site : CodeableConcept;        -- A coded specification of the anatomic site where the medication first enters the body.
+    attribute route : CodeableConcept;       -- A code specifying the route or physiological path of administration of a therapeutic agent into or onto a subject.
+    attribute method : CodeableConcept;      -- A coded value indicating the method by which the medication is introduced into or onto the body. Most commonly used for injections.  Examples:  Slow Push; Deep IV.
+
+Terminologies used often pre-coordinate this term with the route and or form of administration.
+    attribute quantity : Quantity;           -- The amount of the therapeutic or other substance given at one administration event.
+    attribute rate : Ratio;                  -- Identifies the speed with which the substance is introduced into the subject. Typically the rate for an infusion. 200ml in 2 hours.
+    attribute maxDosePerPeriod : Ratio;      -- The maximum total quantity of a therapeutic substance that my be administered to a subject over the period of time. E.g. 1000mg in 24 hours.
+  }
+
+  class MedicationDispense_substitution      -- Indicates whether or not substitution was made as part of the dispense.  In some cases substitution will be expected but doesn't happen, in other cases substitution is not expected but does happen.  This block explains what substitition did or did not happen and why.
+  {
+    attribute type : CodeableConcept;        -- A code signifying whether a different drug was dispensed from what was prescribed.
+    attribute reason : CodeableConcept;      -- Indicates the reason for the substitution of (or lack of substitution) from what was prescribed.
+    attribute responsibleParty : Resource;   -- The person or organization that has primary responsibility for the substitution.
+  }
+
+  class DeviceLog extends Resource           -- A set of raw data produced by a device.
+  {
+    attribute instant : instant;             -- The point in time that the values are reported.
+    attribute capabilities : Resource;       -- An explicit reference  to the capabilities.
+    attribute subject : Resource;            -- The subject of the measurement.
+    attribute item : DeviceLog_item;         -- An item of data that the device produces.
+  }
+
+  class DeviceLog_item                       -- An item of data that the device produces.
+  {
+    attribute key : String;                  -- Reference to a device capabilities declaration.
+    attribute value : String;                -- The value of the data item, if available. Irrespective of the logical format of the data item, the value is always represented as a string.
+    attribute flag : code;                   -- Information about the quality of the data etc.
+  }
+
+  class MedicationPrescription extends Resource -- An order for both supply of the medication and the instructions for administration of the medicine to a patient.
+  {
+    attribute identifier : Identifier;       -- External identifier - one that would be used by another non-FHIR system - for example a re-imbursement system might issue its own id for each prescription that is created.  This is particularly important where FHIR only provides part of an erntire workflow process where records have to be tracked through an entire system.
+    attribute dateWritten : dateTime;        -- The date (and perhaps time) when the prescription was written.
+    attribute status : code;                 -- A code specifying the state of the order.  Generally this will be active or completed state.
+    attribute patient : Resource;            -- A link to a resource representing the person to whom the medication will be given.
+    attribute prescriber : Resource;         -- The healthcare professional responsible for authorising the prescription.
+    attribute encounter : Resource;          -- A link to a resource that identifies the particular occurrence of contact between patient and health care provider.
+    attribute reasonForPrescribing : ?;      -- Can be the reason or the indication for writing the prescription.
+    attribute medication : Resource;         -- Identifies the medication being administered. This is either a link to a resource representing the details of the medication or a simple attribute carrying a code that identifies the medication from a known list of medications.
+    attribute dosageInstruction : MedicationPrescription_dosageInstruction; -- Indicates how the medication is to be used by the patient.
+    attribute dispense : MedicationPrescription_dispense; -- Deals with details of the dispense part of the order.
+    attribute substitution : MedicationPrescription_substitution; -- Indicates whether or not substitution can or should as part of the dispense.  In some cases substitution must  happen, in other cases substitution must not happen, and in others it does not matter.  This block explains the prescribers intent.  If nothing is specified substitution may be done.
+  }
+
+  class MedicationPrescription_dosageInstruction -- Indicates how the medication is to be used by the patient.
+  {
+    attribute dosageInstructionsText : String; -- Free text dosage instructions for cases where the instructions are too complex to code.
+    attribute additionalInstructions : ?;    -- Additional instructions such as "Swallow with plenty of water" which may or may not be coded.
+    attribute timing : ?;                    -- The timing schedule for giving the medication to the patient.  The Schedule data type allows many different expressions, for example.  "Every  8 hours"; "Three times a day"; "1/2 an hour before breakfast for 10 days from 23-Dec 2011:";  "15 Oct 2013, 17 Oct 2013 and 1 Nov 2013".
+    attribute site : CodeableConcept;        -- A coded specification of the anatomic site where the medication first enters the body.
+    attribute route : CodeableConcept;       -- A code specifying the route or physiological path of administration of a therapeutic agent into or onto a patient.
+    attribute method : CodeableConcept;      -- A coded value indicating the method by which the medication is introduced into or onto the body. Most commonly used for injections.  Examples:  Slow Push; Deep IV.
+
+Terminologies used often pre-coordinate this term with the route and or form of administration.
+    attribute doseQuantity : Quantity;       -- The amount of the therapeutic or other substance given at one administration event.
+    attribute rate : Ratio;                  -- Identifies the speed with which the substance is introduced into the subject. Typically the rate for an infusion. 200ml in 2 hours.
+    attribute maxDosePerPeriod : Ratio;      -- The maximum total quantity of a therapeutic substance that my be administered to a subject over the period of time. E.g. 1000mg in 24 hours.
+  }
+
+  class MedicationPrescription_dispense      -- Deals with details of the dispense part of the order.
+  {
+    attribute medication : Resource;         -- Identifies the medication that is to be dispensed.  This may be a more specifically defined than the medicationPrescription.medication . This is either a link to a resource representing the details of the medication or a simple attribute carrying a code that identifies the medication from a known list of medications.
+    attribute validityPeriod : Period;       -- Design Comments: This indicates the validity period of a prescription (stale dating the Prescription) 
+It reflects the prescriber perspective for the validity of the prescription. Dispenses must not be made against the prescription outside of this period. The lower-bound of the Dispensing Window signifies the earliest date that the prescription can be filled for the first time. If an upper-bound is not specified then the Prescription is open-ended or will default to a stale-date based on regulations. 
+Rationale: Indicates when the Prescription becomes valid, and when it ceases to be a dispensable Prescription.
+    attribute numberOfRepeatsAllowed : integer; -- An integer indicating the number of repeats of the Dispense. 
+UsageNotes: For example, the number of times the prescribed quantity is to be supplied including the initial standard fill.
+    attribute quantity : Quantity;           -- The amount that is to be dispensed.
+    attribute expectedSupplyDuration : Duration; -- Identifies the period time over which the supplied product is expected to be used, or the length of time the dispense is expected to last. 
+In some situations, this attribute may be used instead of quantity to identify the amount supplied by how long it is expected to last, rather than the physical quantity issued. E.g. 90 days supply of medication (based on an ordered dosage) When possible, it is always better to specify quantity, as this tends to be more precise. expectedSupplyDuration will always be an estimate that can be influenced by external factors.
+  }
+
+  class MedicationPrescription_substitution  -- Indicates whether or not substitution can or should as part of the dispense.  In some cases substitution must  happen, in other cases substitution must not happen, and in others it does not matter.  This block explains the prescribers intent.  If nothing is specified substitution may be done.
+  {
+    attribute type : CodeableConcept;        -- A code signifying whether a different drug should be dispensed from what was prescribed.
+    attribute reason : CodeableConcept;      -- Indicates the reason for the substitution why substitution must or must not be performed.
+  }
+
+  class DeviceCapabilities extends Resource  -- Describes the set of data produced by a device.
+  {
+    attribute name : String;                 -- The name of this device.
+    attribute type : CodeableConcept;        -- The kind of device - what kind of functionality it provides.
+    attribute manufacturer : String;         -- The company that built this device.
+    attribute identity : Resource;           -- Identifies this particular device uniquely.
+    attribute virtualDevice : DeviceCapabilities_virtualDevice; -- A medical-related subsystem of a medical device.
+  }
+
+  class DeviceCapabilities_virtualDevice     -- A medical-related subsystem of a medical device.
+  {
+    attribute code : CodeableConcept;        -- Describes the compartment.
+    attribute channel : DeviceCapabilities_virtualDevice_channel; -- Groups together physiological measurement data and derived data.
+  }
+
+  class DeviceCapabilities_virtualDevice_channel -- Groups together physiological measurement data and derived data.
+  {
+    attribute code : CodeableConcept;        -- Describes the channel.
+    attribute metric : DeviceCapabilities_virtualDevice_channel_metric; -- A piece of measured or derived data that will be reported by the machine.
+  }
+
+  class DeviceCapabilities_virtualDevice_channel_metric -- A piece of measured or derived data that will be reported by the machine.
+  {
+    attribute code : CodeableConcept;        -- Describes the metrics.
+    attribute key : String;                  -- Used to link to data in device log.
+    attribute info : DeviceCapabilities_virtualDevice_channel_metric_info; -- How to interpret this metric value.
+    attribute facet : DeviceCapabilities_virtualDevice_channel_metric_facet; -- Additional data that qualifies the metric, or contributes to its assessment.
+  }
+
+  class DeviceCapabilities_virtualDevice_channel_metric_info -- How to interpret this metric value.
+  {
+    attribute type : code;                   -- Type of data for this metric.
+    attribute units : String;                -- Units for this data item (if a quantity or a range).
+    attribute ucum : code;                   -- UCUM units (if a quantity or a range).
+    attribute template : SampledData;        -- A template containing the fixed values for an array output (all the values but the data).
+    attribute system : uri;                  -- System of the codes, if the type is a Coding.
+  }
+
+  class DeviceCapabilities_virtualDevice_channel_metric_facet -- Additional data that qualifies the metric, or contributes to its assessment.
+  {
+    attribute code : CodeableConcept;        -- Describes the facet.
+    attribute scale : decimal;               -- The factor to apply to the raw values to get the correct value.
+    attribute key : String;                  -- Used to link to data in device log.
+    attribute info : DeviceCapabilities_virtualDevice_channel_metric_info; -- How to interpret this facet value.
+  }
+
+  class MedicationStatement extends Resource -- A record of medication being taken by a patient, or that the medication has been given to a patient where the record is the result of a report from the patient, or another clinician.
+  {
+    attribute identifier : Identifier;       -- External identifier - FHIR will generate its own internal IDs (probably URLs) which do not need to be explicitly managed by the resource.  The identifier here is one that would be used by another non-FHIR system - for example an automated medication pump would provide a record each time it operated; an administration while the patient was off the ward might be made with a different system and entered after the event.  Particularly important if these records have to be updated.
+    attribute patient : Resource;            -- A link to a resource representing the person to whom the medication was given.
+    attribute wasNotGiven : boolean;         -- Set this to true if the record is saying that the medication was NOT administered.
+    attribute reasonNotGiven : CodeableConcept; -- A code indicating why the administration has been negated.
+
+Use only if isNegated is set to TRUE.
+    attribute whenGiven : Period;            -- An interval of time during which the administration takes place.  For many administrations, such as swallowing a tablet the lower and upper values of the interval will be the same.
+    attribute medication : Resource;         -- Identifies the medication being administered. This is either a link to a resource representing the details of the medication or a simple attribute carrying a code that identifies the medication from a known list of medications.
+    attribute administrationDevice : Resource; -- An identifier or a link to a resource that identifies a device used in administering the medication to the patient.
+    attribute dosage : MedicationStatement_dosage; -- Indicates how the medication is to be used by the patient.
+  }
+
+  class MedicationStatement_dosage           -- Indicates how the medication is to be used by the patient.
+  {
+    attribute timing : Schedule;             -- The timing schedule for giving the medication to the patient.  The Schedule data type allows many different expressions, for example.  "Every  8 hours"; "Three times a day"; "1/2 an hour before breakfast for 10 days from 23-Dec 2011:";  "15 Oct 2013, 17 Oct 2013 and 1 Nov 2013".
+    attribute site : CodeableConcept;        -- A coded specification of the anatomic site where the medication first enters the body.
+    attribute route : CodeableConcept;       -- A code specifying the route or physiological path of administration of a therapeutic agent into or onto a subject.
+    attribute method : CodeableConcept;      -- A coded value indicating the method by which the medication is introduced into or onto the body. Most commonly used for injections.  Examples:  Slow Push; Deep IV.
+
+Terminologies used often pre-coordinate this term with the route and or form of administration.
+    attribute quantity : Quantity;           -- The amount of the therapeutic or other substance given at one administration event.
+    attribute rate : Ratio;                  -- Identifies the speed with which the substance is introduced into the subject. Typically the rate for an infusion. 200ml in 2 hours.
+    attribute maxDosePerPeriod : Ratio;      -- The maximum total quantity of a therapeutic substance that my be administered to a subject over the period of time. E.g. 1000mg in 24 hours.
+  }
+
+  class Questionnaire extends Resource       -- A set of answers to predefined lists of questions. The questions may be ordered and grouped into coherent subsets, corresponding to the structure of the grouping of the underlying questions.
+  {
+    attribute status : code;                 -- The status of the questionnaire as a whole.
+    attribute authored : dateTime;           -- The date and/or time that this version of the questionnaire was authored.
+    attribute subject : Resource;            -- The subject of the questionnaires: this is the patient that the answers apply to, but this person is not necessarily the source of information.
+    attribute author : Resource;             -- Person that collected the answers to the questions in the Questionnaire.
+    attribute source : Resource;             -- The person that answered the questions about the subject. Only used when this is not the subject him/herself.
+    attribute name : CodeableConcept;        -- Structured name for a predefined list of questions this questionnaire is responding to.
+    attribute identifier : Identifier;       -- An identifier that identifier this specific set of answers.
+    attribute encounter : Resource;          -- Encounter during which this questionnaireanswers were collected. When there were multiple encounters, this is the one considered most relevant to the context of the answers.
+    attribute question : Questionnaire_question; -- Answers to questions on a questionnaire.
+    attribute group : Questionnaire_group;   -- A group of questions to a possibly similarly grouped set of question in the questionnaire.
+  }
+
+  class Questionnaire_group                  -- A group of questions to a possibly similarly grouped set of question in the questionnaire.
+  {
+    attribute name : CodeableConcept;        -- Structured name for a section of a predefined list of questions this questionnaire is responding to.
+    attribute header : String;               -- Header for the group, used for display purposes.
+    attribute text : String;                 -- Additional text for the group, used for display purposes.
+    attribute subject : Resource;            -- More specific subject this section's answers are about, details the subject given in Questionnaire.
+    attribute question : Questionnaire_question; -- Set of questions within this group.
+    attribute group : Questionnaire_group;   -- A sub-group within a group.
+  }
+
+  class Questionnaire_question               -- Answers to questions on a questionnaire.
+  {
+    attribute name : CodeableConcept;        -- Structured name for the question.
+    attribute text : String;                 -- Text of the question as it may appear on screen or on a form.
+    attribute answer : ?;                    -- Single-valued answer to the question.
+    attribute choice : Coding;               -- One of more selections from the list of options.
+    attribute options : ?;                   -- Reference to a valueset containing the possible options.
+    attribute data : object;                 -- Structured answer in the form of a FHIR Resource or datatype.
+    attribute remarks : String;              -- The remark contains information about the answer given. This is additional information about the answer the author wishes to convey, but should not be used to contain information that is part of the answer itself.
+  }
+
+  class OperationOutcome extends Resource    -- A collection of error, warning or information messages that result from a system action.
+  {
+    attribute issue : OperationOutcome_issue; -- An error, warning or information message that results from a system action.
+  }
+
+  class OperationOutcome_issue               -- An error, warning or information message that results from a system action.
+  {
+    attribute severity : code;               -- Indicates whether the issue indicates a variation from successful processing.
+    attribute type : Coding;                 -- A code indicating the type of error, warning or information message.
+    attribute details : String;              -- Additional description of the issue.
+    attribute location : String;             -- A simple XPath limited to element names, repetition indicators and the default child access that identifies one of the elements in the resource that caused this issue to be raised.
+  }
+
+  class Conformance extends Resource         -- A conformance statement about how an application or implementation supports FHIR or the set of requirements for a desired implementation.
+  {
+    attribute identifier : String;           -- The identifier that is used to identify this conformance statement when it is referenced in a specification, model, design or an instance (should be globally unique OID, UUID, or URI).
+    attribute version : String;              -- The identifier that is used to identify this version of the conformance statement when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the profile author manually and the value should be a timestamp.
+    attribute name : String;                 -- A free text natural language name identifying the conformance statement.
+    attribute publisher : String;            -- Name of Organization.
+    attribute telecom : Contact;             -- Contacts for Organization relevant to this conformance statement.  May be website, email, phone numbers, etc.
+    attribute description : String;          -- A free text natural language description of the conformance statement and its use. Typically, this is used when the profile describes a desired rather than an actual solution, for example as a formal expression of requirements as part of an RFP.
+    attribute status : code;                 -- The status of this conformance statement.
+    attribute experimental : boolean;        -- This conformance statement was authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.
+    attribute date : dateTime;               -- Date that the conformance statement is published.
+    attribute software : Conformance_software; -- Describes the software that is covered by this conformance statement.  Used when the profile describes the capabilities of a particular software version, independent of an installation.
+    attribute implementation : Conformance_implementation; -- Used when the statement describes the capabilities of a specific implementation instance - i.e. a particular installation, rather than the capabilities of a software program.
+    attribute fhirVersion : id;              -- The version of the FHIR specification on which this conformance statement is based.
+    attribute acceptUnknown : boolean;       -- Whether the application accepts unknown non-"must understand" elements as part of a resource. This does not include extensions, but genuine new additions to a resource.
+    attribute format : code;                 -- The formats supported by this implementation.
+    attribute rest : Conformance_rest;       -- Defines the restful capabilities of the solution, if any.
+    attribute messaging : Conformance_messaging; -- Describes the messaging capabilities of the solution.
+    attribute document : Conformance_document; -- A document definition.
+  }
+
+  class Conformance_software                 -- Describes the software that is covered by this conformance statement.  Used when the profile describes the capabilities of a particular software version, independent of an installation.
+  {
+    attribute name : String;                 -- Name software is known by.
+    attribute version : String;              -- Version covered by this statement.
+    attribute releaseDate : dateTime;        -- Date this version of the software released.
+  }
+
+  class Conformance_implementation           -- Used when the statement describes the capabilities of a specific implementation instance - i.e. a particular installation, rather than the capabilities of a software program.
+  {
+    attribute description : String;          -- Information about the specific installation that this conformance statement relates to.
+    attribute url : uri;                     -- The base URL for the implementation.  This forms the base for REST interfaces as well as the mailbox and document interfaces.
+  }
+
+  class Conformance_messaging                -- Describes the messaging capabilities of the solution.
+  {
+    attribute endpoint : uri;                -- The address to which messages and/or replies are to be sent.
+    attribute reliableCache : integer;       -- The length if the receiver's reliable messaging cache length (if a receiver) or how long the cache length on the receiver should be (if a sender).
+    attribute documentation : String;        -- Provides documentation about the system's messaging capabilities for this endpoint not otherwise documented by the conformance statement.  For example, process for becoming an authorized messaging exchange partner.
+    attribute event : Conformance_messaging_event; -- Describes the solution's support for an event at this end point.
+  }
+
+  class Conformance_document                 -- A document definition.
+  {
+    attribute mode : code;                   -- The mode of this event declaration - whether application is sender or receiver.
+    attribute documentation : String;        -- Describes how the application supports or uses the specified document profile.  For example, when are documents created, what action is taken with consumed documents, etc.
+    attribute profile : Resource;            -- Constraint on a resource used in the document.
+  }
+
+  class Conformance_messaging_event          -- Describes the solution's support for an event at this end point.
+  {
+    attribute code : code;                   -- Identifies the supported messaging event.
+    attribute mode : code;                   -- The mode of this event declaration - whether application is sender or receiver.
+    attribute protocol : Coding;             -- Identifies the messaging transport protocol(s) supported by this endpoint.
+    attribute focus : code;                  -- Identifies the resource associated with the event.  This is the resource that defines the event.
+    attribute request : Resource;            -- Information about the request for this event.
+    attribute response : Resource;           -- Information about the response for this event.
+    attribute documentation : String;        -- Guidance on how this event is handled, such as internal system trigger points, business rules, etc.
+  }
+
+  class Conformance_rest                     -- Defines the restful capabilities of the solution, if any.
+  {
+    attribute mode : code;                   -- Identifies whether this portion of the statement is describing ability to initiate or receive restful operations.
+    attribute documentation : String;        -- Provides documentation about the system's restful capabilities that apply across all applications, such as security.
+    attribute security : Conformance_rest_security; -- Information about security of implementation.
+    attribute resource : Conformance_rest_resource; -- Identifies the restful capabilities of the solution for a specific resource type.
+    attribute batch : boolean;               -- If batches are supported.
+    attribute history : boolean;             -- If a system wide history list is supported.
+    attribute query : Conformance_rest_query; -- Definition of a named query and its parameters and their meaning.
+  }
+
+  class Conformance_rest_resource            -- Identifies the restful capabilities of the solution for a specific resource type.
+  {
+    attribute type : code;                   -- Identifies the resource exposed via the restful interface.
+    attribute profile : Resource;            -- Identifies the profile that describes the solution's support for the resource, including any constraints on cardinality, bindings, lengths or other limitations.
+    attribute operation : Conformance_rest_resource_operation; -- Identifies a restful operation supported by the solution.
+    attribute readHistory : boolean;         -- A flag for whether the server is able to return past versions as part of the vRead operation.
+    attribute searchInclude : String;        -- _include values supported by the server.
+    attribute searchParam : Conformance_rest_resource_searchParam; -- Defines additional search parameters for implementations to support and/or make use of.
+  }
+
+  class Conformance_rest_resource_operation  -- Identifies a restful operation supported by the solution.
+  {
+    attribute code : code;                   -- Identifies which operation is supported.
+    attribute documentation : String;        -- Provides guidance specific to the implementation of this operation, such as 'delete is a logical delete' or 'updates are only allowed with version id' or 'creates permitted from pre-authorized certificates only'.
+  }
+
+  class Conformance_rest_resource_searchParam -- Defines additional search parameters for implementations to support and/or make use of.
+  {
+    attribute name : String;                 -- Corresponds to the name of the standard or custom search parameter.
+    attribute source : uri;                  -- A formal reference to where this parameter was first defined, so that a client can be confident of the meaning of the search parameter.
+    attribute type : code;                   -- The type of value a search parameter refers to, and how the content is interpreted.
+    attribute documentation : String;        -- For standard parameters, provides additional information on how the parameter is used in this solution.  For custom parameters, provides a description of what the parameter does.
+    attribute xpath : String;                -- An XPath expression that extracts the set of elements that contain values that a search parameter matches.
+    attribute target : code;                 -- Types of resource (if a resource reference).
+    attribute chain : String;                -- Chained names supported.
+  }
+
+  class Conformance_rest_security            -- Information about security of implementation.
+  {
+    attribute service : CodeableConcept;     -- What type of security services are supported/required.
+    attribute description : String;          -- General description of how security works.
+    attribute certificate : Conformance_rest_security_certificate; -- Certificates associated with security profiles.
+  }
+
+  class Conformance_rest_security_certificate -- Certificates associated with security profiles.
+  {
+    attribute type : code;                   -- Mime type for certificate.
+    attribute blob : base64Binary;           -- Actual certificate.
+  }
+
+  class Conformance_rest_query               -- Definition of a named query and its parameters and their meaning.
+  {
+    attribute name : String;                 -- The name of this query, which is used in the _query parameter when the query is used.
+    attribute documentation : String;        -- Description of the query - the functionality it offers, and considerations about how it functions and to use it.
+    attribute parameter : Conformance_rest_resource_searchParam; -- Parameter for the named query.
+  }
+
+  class Media extends Resource               -- A photo, video, or audio recording acquired or used in healthcare. The actual content maybe inline or provided by direct reference.
+  {
+    attribute type : code;                   -- Whether the media is a photo (still image), an audio recording, or a video recording.
+    attribute subtype : CodeableConcept;     -- Details of the type of the media - usually, how it was acquired (what type of device). If images sourced from a DICOM system, are wrapped in a Media resource, then this is the modality.
+    attribute identifier : Identifier;       -- Identifiers associated with the image - these may include identifiers for the image itself, identifiers for the context of its collection (e.g. series ids) and context ids such as accession numbers or other workflow identifiers.
+    attribute dateTime : dateTime;           -- When the media was originally recorded. For video and audio, if the length of the recording is not insignificant, this is the end of the recording.
+    attribute subject : Resource;            -- Who/What this Media is a record of.
+    attribute requester : Resource;          -- Who requested that this image be collected.
+    attribute operator : Resource;           -- The person who administered the collection of the image.
+    attribute view : CodeableConcept;        -- The name of the imaging view e.g Lateral or Antero-posterior (AP).
+    attribute deviceName : String;           -- The name of the device / manufacturer of the device  that was used to make the recording.
+    attribute height : integer;              -- Height of the image in pixels(photo/video).
+    attribute width : integer;               -- Width of the image in pixels (photo/video).
+    attribute frames : integer;              -- The number of frames in a photo. This is used with a multi-page fax, or an imaging acquisition context that takes multiple slices in a single iamge, or an animated gif. If there is more than one frame, this must have a value in order to alert interface software that a multi-frame capable rendering widget is required.
+    attribute length : integer;              -- The length of the recording in seconds - for audio and video.
+    attribute content : Attachment;          -- The actual content of the media - inline or by direct reference to the media source file.
+  }
+
+  class Profile extends Resource             -- A Resource Profile - a statement of use of one or more FHIR Resources.  It may include constraints on Resources and Data Types, Terminology Binding Statements and Extension Definitions.
+  {
+    attribute identifier : String;           -- The identifier that is used to identify this profile when it is referenced in a specification, model, design or an instance  (should be globally unique OID, UUID, or URI).
+    attribute version : String;              -- The identifier that is used to identify this version of the profile when it is referenced in a specification, model, design or instance. This is an arbitrary value managed by the profile author manually and the value should be a timestamp.
+    attribute name : String;                 -- A free text natural language name identifying the Profile.
+    attribute publisher : String;            -- Details of the individual or organization who accepts responsibility for publishing the profile.
+    attribute telecom : Contact;             -- Contact details to assist a user in finding and communicating with the publisher.
+    attribute description : String;          -- A free text natural language description of the profile and its use.
+    attribute code : Coding;                 -- A set of terms from external terminologies that may be used to assist with indexing and searching of templates.
+    attribute status : code;                 -- The status of the profile.
+    attribute experimental : boolean;        -- This profile was authored for testing purposes (or education/evaluation/marketing), and is not intended to be used for genuine usage.
+    attribute date : dateTime;               -- The date that this version of the profile was published.
+    attribute fhirVersion : id;              -- The version of the FHIR specification on which this profile is based.
+    attribute structure : Profile_structure; -- A constraint statement about what contents a resource or data type may have.
+    attribute extensionDefn : Profile_extensionDefn; -- An extension defined as part of the profile.
+    attribute binding : Profile_binding;     -- Defines a linkage between a vocabulary binding name used in the profile (or expected to be used in profile importing this one) and a value set or code list.
+  }
+
+  class Profile_binding                      -- Defines a linkage between a vocabulary binding name used in the profile (or expected to be used in profile importing this one) and a value set or code list.
+  {
+    attribute name : String;                 -- The name to be associated with this set of codes.
+    attribute isExtensible : boolean;        -- If true, then conformant systems may use additional codes or (where the data type permits) text alone to convey concepts not covered by the set of codes identified in the binding.  If false, then conformant systems are constrained to the provided codes alone.
+    attribute conformance : code;            -- Indicates the degree of conformance expectations associated with this binding.
+    attribute description : String;          -- Describes the intended use of this particular set of codes.
+    attribute reference : ?;                 -- Points to the value set or external definition that identifies the set of codes to be used.
+  }
+
+  class Profile_structure                    -- A constraint statement about what contents a resource or data type may have.
+  {
+    attribute type : code;                   -- The Resource or Data type being described.
+    attribute name : String;                 -- The name of this resource constraint statement (to refer to it from other resource constraints - from Profile.structure.element.definition.type.profile).
+    attribute publish : boolean;             -- This definition of a profile on a structure is published as a formal statement. Some structural definitions might be defined purely for internal use within the profile, and not intended to be used outside that context.
+    attribute purpose : String;              -- Human summary: why describe this resource?.
+    attribute element : Profile_structure_element; -- Captures constraints on each element within the resource.
+  }
+
+  class Profile_structure_element            -- Captures constraints on each element within the resource.
+  {
+    attribute path : String;                 -- The path identifies the element and is expressed as a "."-separated list of ancestor elements, beginning with the name of the resource.
+    attribute name : String;                 -- The name of this element definition (to refer to it from other element definitions using Profile.structure.element.definition.nameReference). This is a unique name referring to a specific set of constraints applied to this element. One use of this is to provide a name to different slices of the same element.
+    attribute slicing : Profile_structure_element_slicing; -- Indicates that the element is sliced into a set of alternative definitions (there are multiple definitions on a single element in the base resource). The set of slices is any elements that come after this in the element sequence that have the same path, until a shorter path occurs (the shorter path terminates the set).
+    attribute definition : Profile_structure_element_definition; -- Definition of the content of the element to provide a more specific definition than that contained for the element in the base resource.
+  }
+
+  class Profile_structure_element_slicing    -- Indicates that the element is sliced into a set of alternative definitions (there are multiple definitions on a single element in the base resource). The set of slices is any elements that come after this in the element sequence that have the same path, until a shorter path occurs (the shorter path terminates the set).
+  {
+    attribute discriminator : id;            -- Designates which child element is used to discriminate between the slices when processing an instance. The value of the child element in the instance must completely distinguish which slice the element in the resource matches based on the allowed values for that element in each of the slices.
+    attribute ordered : boolean;             -- If the matching elements have to occur in the same order as defined in the profile.
+    attribute rules : code;                  -- Whether additional slices are allowed or not. When the slices are ordered, profile authors can also say that additional slices are only allowed at the end.
+  }
+
+  class Profile_structure_element_definition -- Definition of the content of the element to provide a more specific definition than that contained for the element in the base resource.
+  {
+    attribute short : String;                -- A concise definition that  is shown in the concise XML format that summarizes profiles.
+    attribute formal : String;               -- The definition must be consistent with the base definition, but convey the meaning of the element in the particular context of use of the resource.
+    attribute comments : String;             -- Comments about the use of the element, including notes about how to use the data properly, exceptions to proper use, etc.
+    attribute requirements : String;         -- Explains why this element is needed and why it's been constrained as it has.
+    attribute synonym : String;              -- Identifies additional names by which this element might also be known.
+    attribute min : integer;                 -- The minimum number of times this element must appear in the instance.
+    attribute max : String;                  -- The maximum number of times this element is permitted to appear in the instance.
+    attribute type : Profile_structure_element_definition_type; -- The data type or resource that the value of this element is permitted to be.
+    attribute nameReference : String;        -- Identifies the name of a slice defined elsewhere in the profile whose constraints should be applied to the current element.
+    attribute value : object;                -- Specifies a value that must hold for this element in the instance.
+    attribute example : object;              -- An example value for this element.
+    attribute maxLength : integer;           -- Indicates the shortest length that must be supported by conformant instances without truncation.
+    attribute condition : id;                -- A reference to an invariant that may make additional statements about the cardinality in the instance.
+    attribute constraint : Profile_structure_element_definition_constraint; -- Formal constraints such as co-occurrence and other constraints that can be computationally evaluated within the context of the instance.
+    attribute mustSupport : boolean;         -- If true, conformant resource authors must be capable of providing a value for the element and resource consumers must be capable of extracting and doing something useful with the data element.  If false, the element may be ignored and not supported.
+    attribute isModifier : boolean;          -- If true, the value of this element affects the interpretation of the element or resource that contains it, and the value of the element cannot be ignored. Typically, this is used for status, negation and qualification codes. The effect of this is that the element cannot be ignored by systems: they must either recognize the element and process it, and/or a pre-determination has been made that it is not relevant to their particular system.
+    attribute binding : uri;                 -- Identifies the set of codes that applies to this element if a data type supporting codes is used. The reference can be local - to a Profile.binding.name, or absolute, to a binding.name in another profile.
+    attribute mapping : Profile_structure_element_definition_mapping; -- Identifies a concept from an external specification that roughly corresponds to this element.
+  }
+
+  class Profile_structure_element_definition_constraint -- Formal constraints such as co-occurrence and other constraints that can be computationally evaluated within the context of the instance.
+  {
+    attribute key : id;                      -- Allows identification of which elements have their cardinalities impacted by the constraint.  Will not be referenced for constraints that do not affect cardinality.
+    attribute name : String;                 -- Used to label the constraint in OCL or in short displays incapable of displaying the full human description.
+    attribute severity : code;               -- Identifies the impact constraint violation has on the conformance of the instance.
+    attribute human : String;                -- Text that can be used to describe the constraint in messages identifying that the constraint has been violated.
+    attribute xpath : String;                -- XPath expression of constraint.
+    attribute ocl : String;                  -- OCL expression of constraint.
+  }
+
+  class Profile_structure_element_definition_type -- The data type or resource that the value of this element is permitted to be.
+  {
+    attribute code : code;                   -- Data type or Resource.
+    attribute profile : uri;                 -- Identifies a profile that must hold for resources or datatypes referenced as the type of this element. Can be a local reference - to another structure in this profile, or a reference to a structure in another profile.
+    attribute bundled : boolean;             -- Whether the Resource that is the value for this element is included in the bundle, if the profile is specifying a bundle.
+  }
+
+  class Profile_structure_element_definition_mapping -- Identifies a concept from an external specification that roughly corresponds to this element.
+  {
+    attribute target : uri;                  -- The name of the specification is mapping is being expressed to.
+    attribute map : String;                  -- Expresses what part of the target specification corresponds to this element.
+  }
+
+  class Profile_extensionDefn                -- An extension defined as part of the profile.
+  {
+    attribute code : code;                   -- A unique code (within the profile) used to identify the extension.
+    attribute contextType : code;            -- Identifies the type of context to which the extension applies.
+    attribute context : String;              -- Identifies the types of resource or data type elements to which the extension can be applied.
+    attribute definition : Profile_structure_element_definition; -- Definition of the extension and its content.
+  }
+
+  class DocumentReference extends Resource   -- A reference to a document.
+  {
+    attribute masterIdentifier : Identifier; -- Document identifier as assigned by the source of the document. This identifier is specific to this version of the document. This unique identifier may be used elsewhere to identify this version of the document.
+    attribute identifier : Identifier;       -- Other identifiers associated with the record.
+    attribute subject : Resource;            -- Who or what the document is about. The document can be about a person, (patient or healthcare practitioner), a device (I.e. machine) or even a group of subjects (such as a document about a herd of farm animals, or a set of patients that share a common exposure).
+    attribute type : CodeableConcept;        -- Specifies the particular kind of document (e.g. Patient Summary, Discharge Summary, Prescription, etc.).
+    attribute subtype : CodeableConcept;     -- More detailed information about the document type.
+    attribute author : Resource;             -- Identifies who is responsible for adding the information to the document.
+    attribute custodian : Resource;          -- Identifies the organization or group who is responsible for ongoing maintenance of and access to the document.
+    attribute authenticator : Resource;      -- Which person or organization authenticates that this document is valid.
+    attribute created : dateTime;            -- When the document was created.
+    attribute indexed : instant;             -- When the document reference was created.
+    attribute status : code;                 -- The status of this document reference.
+    attribute docStatus : CodeableConcept;   -- The status of the underlying document.
+    attribute supercedes : Resource;         -- If this document replaces another.
+    attribute description : String;          -- Human Readable description of the source document. This is sometimes known as the "title".
+    attribute confidentiality : CodeableConcept; -- A code specifying the level of confidentiality of the XDS Document.
+    attribute primaryLanguage : code;        -- The primary language in which the source document is written.
+    attribute mimeType : code;               -- The mime type of the source document.
+    attribute format : CodeableConcept;      -- The format of the document. This is used when the mimeType of the document does not provide enough differentiating information (typically, when the mime type of the document is text/xml).
+    attribute size : integer;                -- The size of the source document this reference refers to in bytes.
+    attribute hash : String;                 -- A hash of the source document to ensure that changes have not occurred.
+    attribute location : uri;                -- A url at which the document can be accessed.
+    attribute service : DocumentReference_service; -- A description of a service call that can be used to retrieve the document.
+    attribute context : DocumentReference_context; -- The clinical context in which the document was prepared.
+  }
+
+  class DocumentReference_context            -- The clinical context in which the document was prepared.
+  {
+    attribute code : CodeableConcept;        -- The type of clinical context, such as a kind of surgery, or a kind of speciality, or a clinical type.
+    attribute period : Period;               -- The time period of the patient's care that is described by the document.
+    attribute facilityType : CodeableConcept; -- The kind of facility where the patient was seen.
+  }
+
+  class DocumentReference_service            -- A description of a service call that can be used to retrieve the document.
+  {
+    attribute type : CodeableConcept;        -- The type of the service that can be used to access the documents.
+    attribute address : String;              -- Where the service end-point is located.
+    attribute parameter : DocumentReference_service_parameter; -- A list of named parameters that is used in the service call.
+  }
+
+  class DocumentReference_service_parameter  -- A list of named parameters that is used in the service call.
+  {
+    attribute name : String;                 -- The name of a parameter.
+    attribute value : String;                -- The value of the named parameter.
+  }
+
+  class Immunization extends Resource        -- Immunization event information.
+  {
+    attribute date : dateTime;               -- Date vaccine administered or was to be administered.
+    attribute vaccineType : CodeableConcept; -- Vaccine that was administered or was to be administered.
+    attribute subject : Resource;            -- The patient to whom the vaccine was to be administered.
+    attribute refusedIndicator : boolean;    -- Indicates if the vaccination was refused.
+    attribute reported : boolean;            -- True if this administration was reported rather than directly administered.
+    attribute performer : Resource;          -- Clinician that administered the vaccine.
+    attribute requester : Resource;          -- Clinician who ordered the vaccination.
+    attribute manufacturer : Resource;       -- Name of vaccine manufacturer.
+    attribute location : Resource;           -- The service delivery location where the vaccine administration occurred.
+    attribute lotNumber : String;            -- Lot number of the  vaccine product.
+    attribute expirationDate : date;         -- Date vaccine batch expires.
+    attribute site : CodeableConcept;        -- Body site where vaccine was administered.
+    attribute route : CodeableConcept;       -- The path by which the vaccine product is taken into the body.
+    attribute doseQuantity : Quantity;       -- The quantity of vaccine product that was administered.
+    attribute explanation : Immunization_explanation; -- Reasons why a vaccine was administered or refused.
+    attribute reaction : Immunization_reaction; -- Categorical data indicating that an adverse event is associated in time to an immunization.
+    attribute vaccinationProtocol : Immunization_vaccinationProtocol; -- Contains information about the protocol under which the vaccine was administered.
+  }
+
+  class Immunization_vaccinationProtocol     -- Contains information about the protocol under which the vaccine was administered.
+  {
+    attribute doseSequence : integer;        -- Nominal position in a series.
+    attribute description : String;          -- Contains the description about the protocol under which the vaccine was administered.
+    attribute authority : Resource;          -- Indicates the authority who published the protocol?  E.g. ACIP.
+    attribute series : String;               -- One possible path to achieve presumed immunity against a disease - within the context of an authority.
+    attribute seriesDoses : integer;         -- The recommended number of doses to achieve immunity.
+    attribute doseTarget : CodeableConcept;  -- The targeted disease.
+    attribute doseStatus : CodeableConcept;  -- Indicates if the immunization event should "count" against  the protocol.
+    attribute doseStatusReason : CodeableConcept; -- Provides an explanation as to why a immunization event should or should not count against the protocol.
+  }
+
+  class Immunization_explanation             -- Reasons why a vaccine was administered or refused.
+  {
+    attribute reason : CodeableConcept;      -- Reasons why a vaccine was administered.
+    attribute refusalReason : CodeableConcept; -- Refusal or exemption reasons.
+  }
+
+  class Immunization_reaction                -- Categorical data indicating that an adverse event is associated in time to an immunization.
+  {
+    attribute date : dateTime;               -- Date of reaction to the immunization.
+    attribute detail : Resource;             -- Details of the reaction.
+    attribute reported : boolean;            -- Self-reported indicator.
+  }
+
+  class OrderResponse extends Resource       -- A response to an order.
+  {
+    attribute request : Resource;            -- The order that this is a response to.
+    attribute date : dateTime;               -- When the response was made.
+    attribute who : Resource;                -- Who made the response.
+    attribute authority : Resource;          -- If required by policy.
+    attribute cost : Money;                  -- How much the request will/did cost.
+    attribute code : code;                   -- The status of the response.
+    attribute description : String;          -- Additional description of the response.
+    attribute fulfillment : Resource;        -- Details of the outcome of performing the order.
+  }
+
+  class ImagingStudy extends Resource        -- Manifest of a set of images produced in study. The set of images may include every image in the study, or it may be an incomplete sample, such as a list of key images.
+  {
+    attribute dateTime : dateTime;           -- Date and Time the study took place.
+    attribute subject : Resource;            -- Who the images are of.
+    attribute uid : oid;                     -- Formal identifier for the study.
+    attribute accessionNo : Identifier;      -- Accession Number.
+    attribute identifier : Identifier;       -- Other identifiers for the study.
+    attribute modality : code;               -- A list of all the Series.ImageModality values that are actual acquisition modalities, i.e. those in the DICOM Context Group 29 (value set OID 1.2.840.10008.6.1.19).
+    attribute referrer : Resource;           -- The requesting/referring physician.
+    attribute availability : code;           -- Availability of study (online, offline or nearlnie).
+    attribute url : uri;                     -- WADO-RS URI where Study is available.
+    attribute numberOfSeries : integer;      -- Number of Series in Study.
+    attribute numberOfInstances : integer;   -- Number of SOP Instances in Study.
+    attribute clinicalInformation : String;  -- Diagnoses etc provided with request.
+    attribute procedure : Coding;            -- Type of procedure performed.
+    attribute interpreter : Resource;        -- Who read study and interpreted the images.
+    attribute description : String;          -- Institution-generated description or classification of the Study (component) performed.
+    attribute series : ImagingStudy_series;  -- Each study has one or more series of image instances.
+  }
+
+  class ImagingStudy_series                  -- Each study has one or more series of image instances.
+  {
+    attribute number : integer;              -- The number of this series in the overall sequence.
+    attribute modality : code;               -- The modality of this sequence.
+    attribute uid : oid;                     -- Formal identifier for this series.
+    attribute description : String;          -- A description of the series.
+    attribute numberOfInstances : integer;   -- Sequence that contains attributes from the.
+    attribute availability : code;           -- Availability of series (online, offline or nearlnie).
+    attribute url : uri;                     -- WADO-RS URI where Series is available.
+    attribute bodySite : Coding;             -- Body part examined. See  DICOM Part 16 Annex L for the mapping from DICOM to Snomed.
+    attribute dateTime : dateTime;           -- When the series started.
+    attribute instance : ImagingStudy_series_instance; -- A single image taken from a patient.
+  }
+
+  class ImagingStudy_series_instance         -- A single image taken from a patient.
+  {
+    attribute number : integer;              -- The number of this image in the series.
+    attribute uid : oid;                     -- Formal identifier for this image.
+    attribute sopclass : oid;                -- DICOM Image type.
+    attribute type : String;                 -- Type of instance (0004,1430).
+    attribute title : String;                -- Description to be provided.
+    attribute url : uri;                     -- WADO url where image is available.
+    attribute attachment : Resource;         -- A FHIR resource with content for this instance.
+  }
+
+  class Practitioner extends Resource        -- Demographics and qualification information for an individual who is directly or indirectly involved in the provisioning of healthcare.
+  {
+    attribute identifier : Identifier;       -- An identifier that applies to this person in this role.
+    attribute name : HumanName;              -- A name associated with the person.
+    attribute telecom : Contact;             -- A contact detail for the practitioner, e.g. a telephone number or an email address.
+    attribute address : Address;             -- One or more addresses where the practitioner can be found or visited.
+    attribute gender : CodeableConcept;      -- Administrative Gender - the gender that the person is considered to have for administration and record keeping purposes.
+    attribute birthDate : dateTime;          -- The date and time of birth for the practitioner.
+    attribute photo : Attachment;            -- Image of the person.
+    attribute organization : Resource;       -- The organization that the practitioner represents.
+    attribute role : CodeableConcept;        -- The way in which the person represents the organization - what role do they have?.
+    attribute specialty : CodeableConcept;   -- Specific specialty of the practitioner.
+    attribute period : Period;               -- The period during which the person is authorized to perform the service.
+    attribute qualification : Practitioner_qualification; -- Qualifications relevant to the provided service.
+    attribute communication : CodeableConcept; -- A language the practitioner is able to use in patient communication.
+  }
+
+  class Practitioner_qualification           -- Qualifications relevant to the provided service.
+  {
+    attribute code : CodeableConcept;        -- Coded representation of the qualification.
+    attribute period : Period;               -- Period during which the qualification is valid.
+    attribute issuer : Resource;             -- Organization that regulates and issues the qualification.
+  }
+
+  class CarePlan extends Resource            -- Describes the intention of how one or more practitioners intend to deliver care for a particular patient for a period of time, possibly limited to care for a specific condition or set of conditions.
+  {
+    attribute identifier : Identifier;       -- Unique identifier by which the care plan is known in different business contexts.
+    attribute patient : Resource;            -- Identifies the patient/subject whose intended care is described by the plan.
+    attribute status : code;                 -- Indicates whether the plan is currently being acted upon, represents future intentions or is now just historical record.
+    attribute period : Period;               -- Indicates when the plan did (or is intended to) come into effect and end.
+    attribute modified : dateTime;           -- Identifies the most recent date on which the plan has been revised.
+    attribute concern : Resource;            -- Identifies the conditions/problems/concerns/diagnoses/etc. whose management and/or mitigation are handled by this plan.
+    attribute participant : CarePlan_participant; -- Identifies all people and organizations who are expected to be involved in the care envisioned by this plan.
+    attribute goal : CarePlan_goal;          -- Describes the intended objective(s) of carrying out the Care Plan.
+    attribute activity : CarePlan_activity;  -- Identifies a planned action to occur as part of the plan.  For example, a medication to be used, lab tests to perform, self-monitoring, education, etc.
+    attribute notes : String;                -- General notes about the care plan not covered elsewhere.
+  }
+
+  class CarePlan_activity                    -- Identifies a planned action to occur as part of the plan.  For example, a medication to be used, lab tests to perform, self-monitoring, education, etc.
+  {
+    attribute category : code;               -- High-level categorization of the type of activity in a care plan.
+    attribute code : CodeableConcept;        -- Detailed description of the type of activity.  E.g. What lab test, what procedure, what kind of encounter.
+    attribute status : code;                 -- Identifies what progress is being made for the specific activity.
+    attribute prohibited : boolean;          -- If true, indicates that the described activity is one that must NOT be engaged in when following the plan.
+    attribute timing : ?;                    -- The period, timing or frequency upon which the described activity is to occur.
+    attribute location : Resource;           -- Identifies the facility where the activity will occur.  E.g. home, hospital, specific clinic, etc.
+    attribute performer : Resource;          -- Identifies who's expected to be involved in the activity.
+    attribute product : Resource;            -- Identifies the food, drug or other product being consumed or supplied in the activity.
+    attribute dailyAmount : Quantity;        -- Identifies the quantity expected to be consumed in a given day.
+    attribute quantity : Quantity;           -- Identifies the quantity expected to be supplied.
+    attribute details : String;              -- This provides a textual description of constraints on the activity occurrence, including relation to other activities.  It may also include objectives, pre-conditions and end-conditions.  Finally, it may convey specifics about the activity such as body site, method, route, etc.
+    attribute actionTaken : Resource;        -- Resources that describe follow-on actions resulting from the plan, such as drug prescriptions, encounter records, appointments, etc.
+    attribute notes : String;                -- Notes about the execution of the activity.
+  }
+
+  class CarePlan_goal                        -- Describes the intended objective(s) of carrying out the Care Plan.
+  {
+    attribute description : String;          -- Human readable description of a specific desired objective of the care plan.
+    attribute status : code;                 -- Indicates whether the goal has been reached and is still considered relevant.
+    attribute notes : String;                -- Any comments related to the goal.
+  }
+
+  class CarePlan_participant                 -- Identifies all people and organizations who are expected to be involved in the care envisioned by this plan.
+  {
+    attribute role : CodeableConcept;        -- Indicates specific responsibility of an individual within the care plan.  E.g. "Primary physician", "Team coordinator", "Caregiver", etc.
+    attribute member : Resource;             -- The specific person or organization who is participating/expected to participate in the care plan.
+  }
+
+  class Provenance extends Resource          -- Provenance information that describes the activity that lead to the creation of a set of resources. This information can be used to help determine their reliability or trace where the information in them came from. The focus of the provenance resource is record keeping, audit and traceability, and not explicit statements of clinical significance.
+  {
+    attribute target : Resource;             -- The resource(s) that were generated by  the activity described in this resource. A provenance can point to more than one target if multiple resources were created/updated by the same activity.
+    attribute period : Period;               -- The period during which the activity occurred.
+    attribute recorded : instant;            -- The instant of time at which the activity was recorded.
+    attribute reason : CodeableConcept;      -- The reason that the activity was taking place.
+    attribute location : Resource;           -- Where the activity occurred, if relevant.
+    attribute policy : uri;                  -- Policy or plan the activity was defined by. Typically, a single activity may have multiple applicable policy documents, such as patient consent, guarantor funding, etc.
+    attribute agent : Provenance_agent;      -- An agent takes a role in an activity such that the agent can be assigned some degree of responsibility for the activity taking place. An agent can be a person, a piece of software, an inanimate object, an organization, or other entities that may be ascribed responsibility.
+    attribute entity : Provenance_entity;    -- An entity used in this activity.
+    attribute signature : String;            -- A digital signature on the target resource. The signature should reference a participant by xml:id. The signature is only added to support checking cryptographic integrity of the provenance, and not to represent workflow and clinical aspects of the signing process.
+  }
+
+  class Provenance_entity                    -- An entity used in this activity.
+  {
+    attribute role : code;                   -- How the entity was used during the activity.
+    attribute type : Coding;                 -- The type of the entity. If the entity is a resource, then this is a resource type.
+    attribute reference : uri;               -- Identity of participant. May be a logical or physical uri and maybe absolute or relative.
+    attribute display : String;              -- Human readable description of the entity.
+    attribute agent : Provenance_agent;      -- The entity is attributed to an agent to express the agent's responsibility for that entity, possibly along with other agents. This description can be understood as a shorthand for saying that the agent was responsible for the activity which generated the entity.
+  }
+
+  class Provenance_agent                     -- An agent takes a role in an activity such that the agent can be assigned some degree of responsibility for the activity taking place. An agent can be a person, a piece of software, an inanimate object, an organization, or other entities that may be ascribed responsibility.
+  {
+    attribute role : Coding;                 -- The role that the participant played.
+    attribute type : Coding;                 -- The type of the participant.
+    attribute reference : uri;               -- Identity of participant. May be a logical or physical uri and maybe absolute or relative.
+    attribute display : String;              -- Human readable description of the participant.
+  }
+
+  class Device extends Resource              -- This resource identifies an instance of a manufactured thing that is used in the provision of healthcare without being substantially changed through that activity. The device may be a machine, an insert, a computer, an application, etc. This includes durable (reusable) medical equipment as well as disposable equipment used for diagnostic, treatment, and research for healthcare and public health.
+  {
+    attribute type : CodeableConcept;        -- Describes what kind of device that this.
+    attribute manufacturer : String;         -- The name of the manufacturer.
+    attribute model : String;                -- The "model" - an identifier assigned by the manufacturer to identify the product by its type. This number is shared by the all devices sold as the same type.
+    attribute version : String;              -- The version of the device, if the device has multiple releases under the same model, or if the device is software or carries firmware.
+    attribute expiry : date;                 -- Date of expiry of this device (if applicable).
+    attribute identity : Device_identity;    -- Universal Device Id fields.
+    attribute owner : Resource;              -- The organization that is responsible for the provision and ongoing maintenance of the device.
+    attribute assignedId : Identifier;       -- Identifiers assigned to this device by various organizations (unless other specific fields exist for them).
+    attribute location : Resource;           -- The resource may be found in a literal location (i.e. GPS coordinates), a logical place (i.e. "in/with the patient"), or a coded location.
+    attribute patient : Resource;            -- If the resource is affixed to a person.
+    attribute contact : Contact;             -- Contact details for an organization or a particular human that is responsible for the device.
+    attribute url : uri;                     -- A network address on which the device may be contacted directly.
+  }
+
+  class Device_identity                      -- Universal Device Id fields.
+  {
+    attribute gtin : String;                 -- The number assigned to this device by an authorised issuer of Device GTINs, based on the standards set by GS1.
+    attribute lot : String;                  -- Lot number of manufacture.
+    attribute serialNumber : String;         -- The serial number assigned by the organization when the device was manufactured.
+  }
+
+  class Query extends Resource               -- A description of a query with a set of parameters.
+  {
+    attribute identifier : uri;              -- Links query and its response(s).
+    attribute parameter : Extension;         -- Set of query parameters with values.
+    attribute response : Query_response;     -- If this is a response to a query.
+  }
+
+  class Query_response                       -- If this is a response to a query.
+  {
+    attribute identifier : uri;              -- Links response to source query.
+    attribute outcome : code;                -- Outcome of processing the query.
+    attribute total : integer;               -- Total number of matching records.
+    attribute parameter : Extension;         -- Parameters server used.
+    attribute first : Extension;             -- To get first page (if paged).
+    attribute previous : Extension;          -- To get previous page (if paged).
+    attribute next : Extension;              -- To get next page (if paged).
+    attribute last : Extension;              -- To get last page (if paged).
+    attribute reference : Resource;          -- Resources that are the results of the search.
+  }
+
+  class Order extends Resource               -- A request to perform an action.
+  {
+    attribute date : dateTime;               -- When the order was made.
+    attribute subject : Resource;            -- Patient this order is about.
+    attribute source : Resource;             -- Who initiated the order.
+    attribute target : Resource;             -- Who is intended to fulfill the order.
+    attribute reason : String;               -- Text - why the order was made.
+    attribute authority : Resource;          -- If required by policy.
+    attribute when : Order_when;             -- When order should be fulfilled.
+    attribute detail : Resource;             -- What action is being ordered.
+  }
+
+  class Order_when                           -- When order should be fulfilled.
+  {
+    attribute code : CodeableConcept;        -- Code specifies when request should be done. The code may simply be a priority code.
+    attribute schedule : Schedule;           -- A formal schedule.
+  }
+
+  class Procedure extends Resource           -- An action that is performed on a patient. This can be a physical 'thing' like an operation, or less invasive like counseling or hypnotherapy.
+  {
+    attribute subject : Resource;            -- The person on whom the procedure was performed.
+    attribute type : CodeableConcept;        -- The specific procedure that is performed.
+    attribute bodySite : CodeableConcept;    -- Detailed and structured anatomical location information. Multiple locations are allowed - e.g. multiple punch biopsies of a lesion.
+    attribute indication : String;           -- The reason why the procedure was performed. This may be due to a Condition, may be coded entity of some type, or may simply be present as text.
+    attribute performer : Procedure_performer; -- Limited to 'real' people rather than equipment.
+    attribute date : Period;                 -- The dates over which the period was performed. Allows a period to support complex procedures that span more that one date, and also allows for the length of the procedure to be captured.
+    attribute encounter : Resource;          -- The encounter during which the procedure was performed.
+    attribute outcome : String;              -- What was the outcome of the procedure - did it resolve reasons why the procedure was performed?.
+    attribute report : Resource;             -- This could be a histology result. There could potentially be multiple reports - e.g. if this was a procedure that made multiple biopsies.
+    attribute complication : String;         -- Any complications that occurred during the procedure, or in the immediate post-operative period. These are generally tracked separately from the notes, which typically will describe the procedure itself rather than any 'post procedure' issues.
+    attribute followUp : String;             -- If the procedure required specific follow up - e.g. removal of sutures. The followup may be represented as a simple note, or potentially could be more complex in which case the CarePlan resource can be used.
+    attribute relatedItem : Procedure_relatedItem; -- Procedures may be related to other items such as procedures or medications. For example treating wound dehiscence following a previous procedure.
+    attribute notes : String;                -- Any other notes about the procedure - e.g. the operative notes.
+  }
+
+  class Procedure_relatedItem                -- Procedures may be related to other items such as procedures or medications. For example treating wound dehiscence following a previous procedure.
+  {
+    attribute type : code;                   -- The nature of the relationship.
+    attribute target : Resource;             -- The related item - e.g. a procedure.
+  }
+
+  class Procedure_performer                  -- Limited to 'real' people rather than equipment.
+  {
+    attribute person : Resource;             -- The practitioner who was involved in the procedure.
+    attribute role : CodeableConcept;        -- E.g. surgeon, anaethetist, endoscopist.
+  }
+
+  class Substance extends Resource           -- A homogeneous material with a definite composition used in healthcare.
+  {
+    attribute identifier : Identifier;       -- Identifier of the substance.
+    attribute name : String;                 -- Name of the substance.
+    attribute type : CodeableConcept;        -- Type of the substance.
+    attribute description : String;          -- Description of the substance.
+    attribute status : CodeableConcept;      -- Substance status.
+    attribute effectiveTime : Period;        -- When the substance is active or effective.
+    attribute quantity : Quantity;           -- The amount of the substance.
+    attribute ingredient : Resource;         -- A substance can be composed of other substances.
+    attribute quantityMode : CodeableConcept; -- Indicates whether the substance quantity (used for ingredients) are absolute values or values relative to each other (percentages).
+  }
+
+  class DiagnosticReport extends Resource    -- The findings and interpretation of diagnostic  tests performed on patients and/or specimens. The report includes clinical context such as requesting and provider information, and some mix of atomic results, images, textual and coded interpretation, and formatted representation of diagnostic reports.
+  {
+    attribute status : code;                 -- The status of the diagnostic report as a whole.
+    attribute issued : dateTime;             -- The date and/or time that this version of the report was released from the source diagnostic service.
+    attribute subject : Resource;            -- The subject of the report. Usually, but not always, this is a patient. However diagnostic services also perform analyses on specimens collected from a variety of other sources.
+    attribute performer : Resource;          -- The diagnostic service that is responsible for issuing the report.
+    attribute reportId : Identifier;         -- The local ID assigned to the report by the order filler, usually by the Information System of the diagnostic service provider.
+    attribute requestDetail : DiagnosticReport_requestDetail; -- Details concerning a single pathology test requested.
+    attribute serviceCategory : CodeableConcept; -- The section of the diagnostic service that performs the examination e.g. biochemistry, haematology, MRI.
+    attribute diagnosticTime : dateTime;     -- The diagnostically relevant time for this report.
+    attribute results : DiagnosticReport_results; -- A group of results. Results may be grouped by specimen, or by some value in DiagnosticReport.resultGroup.name to describe what binds all the results together.
+    attribute image : Resource;              -- A list of key images associated with this report. The images are generally created during the diagnostic process, and maybe directly of the patient, or of treated specimens (i.e. slides of interest).
+    attribute conclusion : String;           -- Concise and clinically contextualised narrative interpretation of the diagnostic report.
+    attribute codedDiagnosis : CodeableConcept; -- Codes for the conclusion.
+    attribute representation : Attachment;   -- Rich text representation of the entire result as issued by the diagnostic service. Multiple formats are allowed but they must be semantically equivalent.
+  }
+
+  class DiagnosticReport_results             -- A group of results. Results may be grouped by specimen, or by some value in DiagnosticReport.resultGroup.name to describe what binds all the results together.
+  {
+    attribute name : CodeableConcept;        -- A code or name that describes this group of results. For the base group, this is the report name.
+    attribute specimen : Resource;           -- Details about the individual specimen to which these 'Result group' test results refer.
+    attribute group : DiagnosticReport_results; -- A sub-group in a report group. Sub groups can be grouped in arbitrary ways. The group.name defines the purpose and interpretation of the grouping.
+    attribute result : Resource;             -- Specific detailed result, including both the value of the result item and additional information that may be useful for clinical interpretation. Results include whatever specific data items pathology labs report as part of the clinical service; it is not confined to measurements.
+  }
+
+  class DiagnosticReport_requestDetail       -- Details concerning a single pathology test requested.
+  {
+    attribute encounter : Resource;          -- The encounter that this diagnostic investigation is associated with.
+    attribute requestOrderId : Identifier;   -- The local ID assigned to the order by the order requester.
+    attribute receiverOrderId : Identifier;  -- The local ID assigned to the test order by the diagnostic service provider.
+    attribute requestTest : CodeableConcept; -- Identification of pathology test requested,.
+    attribute bodySite : CodeableConcept;    -- Anatomical location where the request test should be performed.
+    attribute requester : Resource;          -- Details of the clinician or organization requesting the diagnostic service.
+    attribute clinicalInfo : String;         -- Details of the clinical information provided to the diagnostic service along with the original request.
+  }
+
+  class Medication extends Resource          -- Primarily used for identification and definition of Medication, but also covers ingredients and packaging.
+  {
+    attribute name : String;                 -- The common name of the medication.
+    attribute code : CodeableConcept;        -- References to codes for this medication in standard medication terminologies, drug dictionaries, etc.
+    attribute isBrand : boolean;             -- Set to true if the item is attributable to a specific manufacturer (even if we don't know who that is).
+    attribute manufacturer : Resource;       -- Describes the details of the manufacturer.
+    attribute kind : code;                   -- product | package.
+    attribute product : Medication_product;  -- If is a product.
+    attribute package : Medication_package;  -- Specifies Ingredient / Product / Package.
+  }
+
+  class Medication_package                   -- Specifies Ingredient / Product / Package.
+  {
+    attribute container : CodeableConcept;   -- The kind of container that this package comes as.
+    attribute content : Medication_package_content; -- A set of components that go to make up the described item.
+  }
+
+  class Medication_package_content           -- A set of components that go to make up the described item.
+  {
+    attribute item : Resource;               -- The product that is in the package.
+    attribute amount : Quantity;             -- The amount of the product that is in the package.
+  }
+
+  class Medication_product                   -- If is a product.
+  {
+    attribute form : CodeableConcept;        -- Describes the form of the item.  Powder; tables; carton.
+    attribute ingredient : Medication_product_ingredient; -- The ingredients of the medication.
+  }
+
+  class Medication_product_ingredient        -- The ingredients of the medication.
+  {
+    attribute item : Resource;               -- The actual ingredient - either a substance (simple ingredient) or another medication.
+    attribute amount : Ratio;                -- Specifies how many (or how much) of the items there are in this Medication.  E.g. 250 mg per tablet.
+  }
+
+  class MedicationAdministration extends Resource -- Describes the event of a patient being given a dose of a medication.  This may be as simple as swallowing a tablet or it may be a long running infusion.
+
+Related resources tie this event to the authorizing prescription, and the specific encounter between patient and health care practitioner.
+  {
+    attribute identifier : Identifier;       -- External identifier - FHIR will generate its own internal IDs (probably URLs) which do not need to be explicitly managed by the resource.  The identifier here is one that would be used by another non-FHIR system - for example an automated medication pump would provide a record each time it operated; an administration while the patient was off the ward might be made with a different system and entered after the event.  Particularly important if these records have to be updated.
+    attribute status : code;                 -- Will generally be set to show that the administration has been completed.  For some long running administrations such as infusions it is possible for an administration to be started but not completed or it may be paused while some other process is under way.
+    attribute patient : Resource;            -- A link to a resource representing the person to whom the medication was given.
+    attribute practitioner : Resource;       -- The individual who is responsible for giving the medication to the patient.
+    attribute encounter : Resource;          -- An link to a resource that identifies the particular occurrence of contact between patient and health care provider.
+    attribute prescription : Resource;       -- A link to a resource that provides the original request, instruction and authority to perform the administration.
+    attribute wasNotGiven : boolean;         -- Set this to true if the record is saying that the medication was NOT administered.
+    attribute reasonNotGiven : CodeableConcept; -- A code indicating why the administration has been negated.
+
+Use only if isNegated is set to TRUE.
+    attribute whenGiven : Period;            -- An interval of time during which the administration takes place.  For many administrations, such as swallowing a tablet the lower and upper values of the interval will be the same.
+    attribute medication : Resource;         -- Identifies the medication being administered. This is either a link to a resource representing the details of the medication or a simple attribute carrying a code that identifies the medication from a known list of medications.
+    attribute administrationDevice : Resource; -- An identifier or a link to a resource that identifies a device used in administering the medication to the patient.
+    attribute dosage : MedicationAdministration_dosage; -- Indicates how the medication is to be used by the patient.
+  }
+
+  class MedicationAdministration_dosage      -- Indicates how the medication is to be used by the patient.
+  {
+    attribute timing : Schedule;             -- The timing schedule for giving the medication to the patient.  The Schedule data type allows many different expressions, for example.  "Every  8 hours"; "Three times a day"; "1/2 an hour before breakfast for 10 days from 23-Dec 2011:";  "15 Oct 2013, 17 Oct 2013 and 1 Nov 2013".
+    attribute site : CodeableConcept;        -- A coded specification of the anatomic site where the medication first enters the body.
+    attribute route : CodeableConcept;       -- A code specifying the route or physiological path of administration of a therapeutic agent into or onto a subject.
+    attribute method : CodeableConcept;      -- A coded value indicating the method by which the medication is introduced into or onto the body. Most commonly used for injections.  Examples:  Slow Push; Deep IV.
+
+Terminologies used often pre-coordinate this term with the route and or form of administration.
+    attribute quantity : Quantity;           -- The amount of themedication given at one administration event.   Use this value when the administration is essentially an instantaneous event such as a swallowing a tablet or giving an injection.
+    attribute rate : Ratio;                  -- Identifies the speed with which the medication is introduced into the patient. Typically the rate for an infusion e.g. 200ml in 2 hours.  May also expressed as a rate per unit of time such as 100ml per hour - the duration is then not specified, or is specified in the quantity.
+    attribute maxDosePerPeriod : Ratio;      -- The maximum total quantity of a therapeutic substance that my be administered to a subject over the period of time. E.g. 1000mg in 24 hours.
+  }
+
+  class Encounter extends Resource           -- An interaction between a patient and healthcare provider(s) for the purpose of providing healthcare service(s) or assessing the health status of a patient.
+  {
+    attribute identifier : Identifier;       -- Identifier(s) by which this encounter is known.
+    attribute status : code;                 -- E.g. active, aborted, finished.
+    attribute class : code;                  -- Inpatient | Outpatient etc.
+    attribute type : CodeableConcept;        -- Specific type of encounter (e.g. e-mail consultation, surgical day-care, skilled nursing, rehabilitation).
+    attribute subject : Resource;            -- The patient present at the encounter.
+    attribute participant : Encounter_participant; -- The main practitioner responsible for providing the service.
+    attribute fulfills : Resource;           -- The appointment that scheduled this encounter.
+    attribute start : dateTime;              -- The date and time the encounter starts, e.g. the patient arrives.
+    attribute length : Duration;             -- Quantity of time the encounter lasted. This excludes the time during leaves of absence.
+    attribute reason : ?;                    -- Reason the encounter takes place.
+    attribute indication : Resource;         -- Reason the encounter takes place.
+    attribute priority : CodeableConcept;    -- Indicates the urgency of the encounter.
+    attribute hospitalization : Encounter_hospitalization; -- Details about an admission to a clinic.
+    attribute location : Encounter_location; -- List of locations the patient has been at.
+    attribute serviceProvider : Resource;    -- The department or team that is providing care.
+    attribute partOf : Resource;             -- Another Encounter this encounter is part of (administratively or in time).
+  }
+
+  class Encounter_hospitalization            -- Details about an admission to a clinic.
+  {
+    attribute preAdmissionIdentifier : Identifier; -- Pre-admission identifier.
+    attribute origin : Resource;             -- The location the patient came from before admission.
+    attribute admitSource : CodeableConcept; -- Where the patient was admitted from (physician referral, transfer).
+    attribute period : Period;               -- Period of hospitalization.
+    attribute accomodation : Encounter_hospitalization_accomodation; -- Where the patient stays during this encounter.
+    attribute diet : CodeableConcept;        -- Dietary restrictions for the patient.
+    attribute specialCourtesy : CodeableConcept; -- Special courtesies (VIP, hospital board member).
+    attribute specialArrangement : CodeableConcept; -- Special arrangements (wheelchair, translator, stretcher).
+    attribute destination : Resource;        -- Location the patient is discharged to.
+    attribute dischargeDisposition : CodeableConcept; -- Disposition a patient was released into.
+    attribute reAdmission : boolean;         -- Is readmission?.
+  }
+
+  class Encounter_hospitalization_accomodation -- Where the patient stays during this encounter.
+  {
+    attribute bed : Resource;                -- Bed.
+    attribute period : Period;               -- Period during which the patient was assigned the bed.
+  }
+
+  class Encounter_location                   -- List of locations the patient has been at.
+  {
+    attribute location : Resource;           -- The location the encounter takes place.
+    attribute period : Period;               -- Time period during which the patient was present at the location.
+  }
+
+  class Encounter_participant                -- The main practitioner responsible for providing the service.
+  {
+    attribute type : code;                   -- Role of participant in encounter.
+    attribute practitioner : Resource;       -- The practitioner that is involved.
+  }
+
+  class SecurityEvent extends Resource       -- A record of an event made for purposes of maintaining a security log. Typical uses include detection of intrusion attempts and monitoring for inappropriate usage.
+  {
+    attribute event : SecurityEvent_event;   -- Identifies the name, action type, time, and disposition of the audited event.
+    attribute participant : SecurityEvent_participant; -- A person, a hardware device or software process.
+    attribute source : SecurityEvent_source; -- Application systems and processes.
+    attribute object : SecurityEvent_object; -- Specific instances of data or objects that have been accessed.
+  }
+
+  class SecurityEvent_event                  -- Identifies the name, action type, time, and disposition of the audited event.
+  {
+    attribute type : CodeableConcept;        -- Identifier for a family of the event.
+    attribute subtype : CodeableConcept;     -- Identifier for the category of event.
+    attribute action : code;                 -- Indicator for type of action performed during the event that generated the audit.
+    attribute dateTime : instant;            -- The time when the event occurred on the source.
+    attribute outcome : code;                -- Indicates whether the event succeeded or failed.
+    attribute outcomeDesc : String;          -- A free text description of the outcome of the event.
+  }
+
+  class SecurityEvent_source                 -- Application systems and processes.
+  {
+    attribute site : String;                 -- Logical source location within the healthcare enterprise network.
+    attribute identifier : String;           -- Identifier of the source where the event originated.
+    attribute type : Coding;                 -- Code specifying the type of source where event originated.
+  }
+
+  class SecurityEvent_participant            -- A person, a hardware device or software process.
+  {
+    attribute role : CodeableConcept;        -- Specification of the role(s) the user plays when performing the event. Usually the codes used in this element are local codes defined by the role-based access control security system used in the local context.
+    attribute reference : Resource;          -- Direct reference to a resource that identifies the participant.
+    attribute userId : String;               -- Unique identifier for the user actively participating in the event.
+    attribute authId : String;               -- User identifier text string from authentication system. This identifier would be one known to a common authentication system (e.g., single sign-on), if available.
+    attribute name : String;                 -- Human-meaningful name for the user.
+    attribute requestor : boolean;           -- Indicator that the user is or is not the requestor, or initiator, for the event being audited.
+    attribute media : Coding;                -- Type of media involved. Used when the event is about exporting/importing onto media.
+    attribute network : SecurityEvent_participant_network; -- Logical network location for application activity, if the activity has a network location.
+  }
+
+  class SecurityEvent_participant_network    -- Logical network location for application activity, if the activity has a network location.
+  {
+    attribute identifier : String;           -- An identifier for the network access point of the user device for the audit event.
+    attribute type : code;                   -- An identifier for the type of network access point that originated the audit event.
+  }
+
+  class SecurityEvent_object                 -- Specific instances of data or objects that have been accessed.
+  {
+    attribute identifier : Identifier;       -- Identifies a specific instance of the participant object. The reference should always be version specific.
+    attribute reference : Resource;          -- Identifies a specific instance of the participant object. The reference should always be version specific.
+    attribute type : code;                   -- Object type being audited.
+    attribute role : code;                   -- Code representing the functional application role of Participant Object being audited.
+    attribute lifecycle : code;              -- Identifier for the data life-cycle stage for the participant object.
+    attribute sensitivity : CodeableConcept; -- Denotes policy-defined sensitivity for the Participant Object ID such as VIP, HIV status, mental health status or similar topics.
+    attribute name : String;                 -- An instance-specific descriptor of the Participant Object ID audited, such as a person's name.
+    attribute query : base64Binary;          -- The actual query for a query-type participant object.
+    attribute detail : SecurityEvent_object_detail; -- Additional Information about the Object.
+  }
+
+  class SecurityEvent_object_detail          -- Additional Information about the Object.
+  {
+    attribute type : String;                 -- Name of the property.
+    attribute value : base64Binary;          -- Property value.
+  }
+
+  class List extends Resource                -- A set of information summarized from a list of other resources.
+  {
+    attribute code : CodeableConcept;        -- This code defines the purpose of the list - why it was created.
+    attribute source : Resource;             -- The entity responsible for deciding what the contents of the list were.
+    attribute date : dateTime;               -- The date that the list was prepared.
+    attribute ordered : boolean;             -- Whether items in the list have a meaningful order.
+    attribute mode : code;                   -- How this list was prepared - whether it is a working list that is suitable for being maintained in an ongoing basis, or if it represents a snapshot of a list of items from another source, or whether it is a prepared list where items may be marked as added, modified or deleted.
+    attribute entry : List_entry;            -- Entries in this list.
+    attribute emptyReason : CodeableConcept; -- If the list is empty, why the list is empty.
+  }
+
+  class List_entry                           -- Entries in this list.
+  {
+    attribute flag : CodeableConcept;        -- The flag allows the system constructing the list to make one or more statements about the role and significance of the item in the list.
+    attribute deleted : boolean;             -- True if this item is marked as deleted in the list.
+    attribute date : dateTime;               -- When this item was added to the list.
+    attribute item : Resource;               -- A reference to the actual resource from which data was derived.
+  }
+
+  class Picture extends Resource             -- An Image used in healthcare. The actual pixels maybe inline or provided by direct reference.
+  {
+    attribute subject : Resource;            -- Who/What this image is taken of.
+    attribute dateTime : dateTime;           -- When the image was taken.
+    attribute operator : Resource;           -- The person who generated the image.
+    attribute identifier : Identifier;       -- Identifier for the image.
+    attribute accessionNo : Identifier;      -- An identifier for the order that is used by the application/system that requested the image to link back to the original context (if there was such a system). This is not the identity of the image, but of the "request for an image to be generated".
+    attribute studyId : Identifier;          -- The session in which the picture was taken.
+    attribute seriesId : Identifier;         -- The series of images in which this picture was taken.
+    attribute method : CodeableConcept;      -- A reference to the method/protocol that was followed when the images were taken.
+    attribute requester : Resource;          -- Who asked that this image be collected.
+    attribute modality : code;               -- Type of the image capturing machinery.
+    attribute deviceName : String;           -- Name of the manufacturer.
+    attribute height : integer;              -- Height of the image.
+    attribute width : integer;               -- Width of the image.
+    attribute bits : integer;                -- Number of bits of colour (2..32).
+    attribute frames : integer;              -- Number of frames.
+    attribute frameDelay : Duration;         -- Length of time between frames.
+    attribute view : CodeableConcept;        -- The name of the imaging view e.g Lateral or Antero-posterior (AP).
+    attribute content : Attachment;          -- Actual picture - reference or data.
+  }
+
+  class Document extends Resource            -- A documentation of healthcare-related information that is assembled together into a single statement of meaning that establishes its own context. A document is composed of a set of resources that include both human and computer readable portions. A human may attest to the accuracy of the human readable portion and may authenticate and/or sign the entire whole. A document may be kept as a set of logically linked resources, or they may be bundled together in an atom feed.
+  {
+    attribute identifier : Identifier;       -- Logical Identifier for the document, assigned when created. This identifier stays constant when subsequent versions of the document are created.
+    attribute versionIdentifier : Identifier; -- Version specific identifier for the document, assigned when created. This identifier changes when subsequent versions of the document are created.
+    attribute created : instant;             -- The document creation time, when the document first came into being. Where the document is a transform from an original document in some other format, the ClinicalDocument.effectiveTime is the time the original document is created.
+    attribute type : CodeableConcept;        -- Specifies the particular kind of document (e.g. History and Physical, Discharge Summary, Progress Note).
+    attribute subtype : CodeableConcept;     -- Additional detailed type for the document.
+    attribute title : String;                -- Official human-readable label for the document.
+    attribute status : code;                 -- The workflow/clinical status of this document. The status is a rough guide to the clinical standing of the document.
+    attribute confidentiality : Coding;      -- The code specifying the level of confidentiality of the XDS Document. These codes are specific to an XDS Affinity Domain.
+    attribute subject : Resource;            -- Who or what the document is about. The document can be about a person, (patient or healthcare practitioner), a device (I.e. machine) or even a group of subjects (such as a document about a herd of farm animals, or a set of patients that share a common exposure).
+    attribute author : Resource;             -- Identifies who is responsible for the information in the document.  (Not necessarily who typed it in.).
+    attribute attester : Document_attester;  -- A participant who has attested to the accuracy of the document.
+    attribute custodian : Resource;          -- Identifies the organization or group who is responsible for ongoing maintenance of and access to the document.
+    attribute event : Document_event;        -- The main event/act/item, such as a colonoscopy or an appendectomy, being documented.
+    attribute encounter : Resource;          -- Describes the clinical encounter or type of care this document is associated with.
+    attribute replaces : id;                 -- Identifies the document this document supersedes, if any.
+    attribute provenance : Resource;         -- Additional provenance about the document and the resources that are the sections.
+    attribute stylesheet : Attachment;       -- A fixed CSS stylesheet to use when rendering the documents.
+    attribute representation : Attachment;   -- An alternative representation of the document that can be used in place of the html based rendering.
+    attribute section : Document_section;    -- Identifies a main topic within the document's table of contents.
+  }
+
+  class Document_attester                    -- A participant who has attested to the accuracy of the document.
+  {
+    attribute mode : code;                   -- The type of attestation the authenticator offers.
+    attribute time : dateTime;               -- When document was attested by the party.
+    attribute party : Resource;              -- Who attested the document in the specified way.
+  }
+
+  class Document_section                     -- Identifies a main topic within the document's table of contents.
+  {
+    attribute code : CodeableConcept;        -- A code identifying the kind of content contained within the section.
+    attribute subject : Resource;            -- Identifies the primary subject of the section.
+    attribute content : Resource;            -- Identifies the discrete data that provides the content for the section.
+    attribute section : Document_section;    -- Identifies a subtopic within the section as part of the document's table of contents.
+  }
+
+  class Document_event                       -- The main event/act/item, such as a colonoscopy or an appendectomy, being documented.
+  {
+    attribute code : CodeableConcept;        -- This list of codes represents the main clinical acts, such as a colonoscopy or an appendectomy, being documented. In some cases, the event is inherent in the typeCode, such as a "History and Physical Report" in which the procedure being documented is necessarily a "History and Physical" act.
+    attribute period : Period;               -- The period of time covered by the document. There is no assertion that the document is a complete representation for this period, only that it documents events during this time.
+    attribute detail : Resource;             -- Full details for the event(s) the document concents.
+  }
+
+  class Message extends Resource             -- The root for a transmission either requesting or responding to an action.  The resource(s) that are the subject of the action as well as other Information related to the action are typically transmitted in a bundle of which the Message resource instance is the first resource in the bundle.
+  {
+    attribute identifier : id;               -- The identifier of this message.
+    attribute timestamp : instant;           -- The time that the message was sent.
+    attribute event : code;                  -- Code that identifies the event this message represents and connects it with the event definition in the FHIR specification.
+    attribute response : Message_response;   -- Information about the message that this message is a response to.  Only present if this message is a response.
+    attribute source : Message_source;       -- The source application from which this message originated.
+    attribute destination : Message_destination; -- The destination application which the message is intended for.
+    attribute enterer : Resource;            -- The person or device that performed the data entry leading to this message. Where there is more than one candidate, pick the most proximal to the message. Can provide other enterers in extensions.
+    attribute author : Resource;             -- The logical author of the message - the person or device that decided the described event should happen. Where there is more than one candidate, pick the most proximal to the Message. Can provide other authors in extensions.
+    attribute receiver : Resource;           -- Allows data conveyed by a message to be addressed to a particular person or department when routing to a specific application isn't sufficient.
+    attribute responsible : Resource;        -- The person or organization that accepts overall responsibility for the contents of the Message. The implication is that the message event happened under the policies of the responsible party.
+    attribute effective : Period;            -- The effective time - the real world time of the event that the message represents. Usually this is just a starting time, but some message events also have an end time (do x for period y).
+    attribute reason : CodeableConcept;      -- Coded indication of the cause for the event - indicates  a reason for the occurance of the event that is a focus of this message.
+    attribute data : Resource;               -- The actual data of the message - a reference to the root/focus class of the event.
+  }
+
+  class Message_destination                  -- The destination application which the message is intended for.
+  {
+    attribute name : String;                 -- Human readable name for the source system.
+    attribute target : Resource;             -- Identifies the target end system in situations where the initial message transmission is to an intermediary system.
+    attribute endpoint : uri;                -- Indicates where the message should be routed to.
+  }
+
+  class Message_source                       -- The source application from which this message originated.
+  {
+    attribute name : String;                 -- Human readable name for the target system.
+    attribute software : String;             -- May include configuration or other information useful in debugging.
+    attribute version : String;              -- Can convey versions of multiple systems in situations where a message passes through multiple hands.
+    attribute contact : Contact;             -- An e-mail, phone, website or other contact point to use to resolve issues with message communications.
+    attribute endpoint : uri;                -- Identifies the routing target to send acknowledgements to.
+  }
+
+  class Message_response                     -- Information about the message that this message is a response to.  Only present if this message is a response.
+  {
+    attribute identifier : id;               -- The id of the message that this a response to.
+    attribute code : code;                   -- Code that identifies the type of response to the message - whether it was successful or not, and whether it should be resent or not.
+    attribute details : Resource;            -- Full details of any issues found in the message.
+  }
+
+  class FamilyHistory extends Resource       -- Significant health events and conditions for people related to the subject relevant in the context of care for the subject.
+  {
+    attribute subject : Resource;            -- The person who this history concerns.
+    attribute note : String;                 -- Conveys information about family history not specific to individual relations.
+    attribute relation : FamilyHistory_relation; -- The related person. Each FamilyHistory resource contains the entire family history for a single person.
+  }
+
+  class FamilyHistory_relation               -- The related person. Each FamilyHistory resource contains the entire family history for a single person.
+  {
+    attribute name : String;                 -- This will either be a name or a description.  E.g. "Aunt Susan", "my cousin with the red hair".
+    attribute relationship : CodeableConcept; -- The type of relationship this person has to the patient (father, mother, brother etc.) At the moment this is a code linking to a fixed set of values. I'm not sure if there is an international standard for this. A fixed (possibly extensible) set of codes feels better than a codeable concept for something like this...
+    attribute deceased : ?;                  -- If this resource is indicating that the related person is deceased, then an indicator of whether the person is deceased (yes) or not (no) or the age or age range or description of age at death - can be indicated here. If the reason for death is known, then it can be indicated in the outcome code of the condition - in this case the deceased property should still be set.
+    attribute note : String;                 -- This property allows a non condition-specific note to the made about the related person. Ideally, the note would be in the condition property, but this is not always possible.
+    attribute condition : FamilyHistory_relation_condition; -- The significant Conditions (or condition) that the family member had. This is a repeating section to allow a system to represent more than one condition per resource, though there is nothing stopping multiple resources - one per condition.
+  }
+
+  class FamilyHistory_relation_condition     -- The significant Conditions (or condition) that the family member had. This is a repeating section to allow a system to represent more than one condition per resource, though there is nothing stopping multiple resources - one per condition.
+  {
+    attribute type : CodeableConcept;        -- The actual condition specified. Could be a coded condition (like MI or Diabetes) or a less specific string like 'cancer' depending on how much is known about the condition and the capabilities of the creating system.
+    attribute outcome : CodeableConcept;     -- Indicates what happened as a result of this condition.  If the condition resulted in death, deceased date is captured on the relation.
+    attribute onset : ?;                     -- Either the age of onset, range of approximate age or descriptive string can be recorded.
+    attribute note : String;                 -- An area where general notes can be placed about this specific condition.
+  }
+
+  class Location extends Resource            -- Contact details and position information for a physical place that may be visited and where healthcare resources and participants may be found or contained, accommodated, or stored.
+  {
+    attribute name : String;                 -- Name of the location which identifies it to its users.
+    attribute description : String;          -- Description of the Location, which helps in finding or referencing the place.
+    attribute type : CodeableConcept;        -- Classification of the location.
+    attribute telecom : Contact;             -- The contact details of the main communication devices present at the location.
+    attribute address : Address;             -- Physical location.
+    attribute position : Location_position;  -- The absolute geographic location of the Location, expressed in a KML compatible manner (see notes below for KML).
+    attribute provider : Resource;           -- The organization that provides services at the location.
+    attribute active : boolean;              -- Whether the location is still used to provide services.
+    attribute partOf : Resource;             -- Another Location which this Location is physically inside of.
+  }
+
+  class Location_position                    -- The absolute geographic location of the Location, expressed in a KML compatible manner (see notes below for KML).
+  {
+    attribute longitude : decimal;           -- Longitude. The value domain and the interpretation are the same as for the text of the longitude element in KML (see notes below).
+    attribute latitude : decimal;            -- Latitude. The value domain and the interpretation are the same as for the text of the latitude element in KML (see notes below).
+    attribute altitude : decimal;            -- Altitude. The value domain and the interpretation are the same as for the text of the altitude element in KML (see notes below).
+  }
+
+  class AllergyIntolerance extends Resource  -- Allergy/Intolerance.
+  {
+    attribute identifier : Identifier;       -- An external identifier for the sensitivity.
+    attribute criticality : code;            -- Criticality of the sensitivity.
+    attribute sensitivityType : code;        -- Type of the sensitivity.
+    attribute recordedDate : dateTime;       -- Date when the sensitivity was recorded.
+    attribute status : code;                 -- Suspected, Confirmed, Refuted, Resolved.
+    attribute subject : Resource;            -- Who the sensitivity is for.
+    attribute recorder : Resource;           -- Who recorded the sensitivity.
+    attribute substance : Resource;          -- The substance that causes the sensitivity.
+    attribute reaction : Resource;           -- Reactions associated with the sensitivity.
+    attribute sensitivityTest : Resource;    -- Observations that confirm or refute the sensitivity.
+  }
+
+  class Observation extends Resource         -- Simple assertions and measurements made about a patient, device or other subject.
+  {
+    attribute name : CodeableConcept;        -- Identifies what type of observation was performed.
+    attribute value : ?;                     -- The information determined as a result of making the observation.
+    attribute interpretation : CodeableConcept; -- The assessment made based on the result of the observation.
+    attribute comments : String;             -- May include statements about significant, unexpected or unreliable values, or information about the source of the value where this may be relevant to the interpretation of the result.
+    attribute applies : ?;                   -- The time or time-period the observed value is asserted as being true. For biological subjects - e.g. human patients - this is usually called the "physiologically relevant time".
+    attribute issued : instant;              -- Date/Time this was made available.
+    attribute status : code;                 -- The status of the result value.
+    attribute reliability : code;            -- An estimate of the degree to which quality issues have impacted on the value reported.
+    attribute bodySite : CodeableConcept;    -- Indicates where on the subject's body the observation was made.
+    attribute method : CodeableConcept;      -- Indicates the mechanism used to perform the observation.
+    attribute identifier : Identifier;       -- A unique identifier for the simple observation.
+    attribute subject : Resource;            -- The thing the observation is being made about.
+    attribute performer : Resource;          -- Who was responsible for asserting the observed value as "true".
+    attribute referenceRange : Observation_referenceRange; -- Guidance on how to interpret the value by comparison to a normal or recommended range.
+    attribute component : Observation_component; -- Component observation.
+  }
+
+  class Observation_component                -- Component observation.
+  {
+    attribute name : CodeableConcept;        -- Identifies what type of sub-observation was performed.
+    attribute value : ?;                     -- The information determined as a result of making the sub-observation.
+  }
+
+  class Observation_referenceRange           -- Guidance on how to interpret the value by comparison to a normal or recommended range.
+  {
+    attribute meaning : CodeableConcept;     -- Code for the meaning of the reference range.
+    attribute range : ?;                     -- Actual value of the reference range.  May be a quantity (<20mg/L), a range (10-20 umol/L), or some text.
+  }
+
+  class ImmunizationProfile extends Resource -- A patient's point-of-time immunization status and recommendation with optional supporting justification.
+  {
+    attribute subject : Resource;            -- The patient who is the subject of the profile.
+    attribute recommendation : ImmunizationProfile_recommendation; -- Vaccine administration recommendations.
+  }
+
+  class ImmunizationProfile_recommendation   -- Vaccine administration recommendations.
+  {
+    attribute recommendationDate : dateTime; -- The date of the immunization recommendation.
+    attribute vaccineType : CodeableConcept; -- Vaccine that pertains to the recommendation.
+    attribute doseNumber : integer;          -- Recommended dose number.
+    attribute forecastStatus : code;         -- Vaccine administration status.
+    attribute dateCriterion : ImmunizationProfile_recommendation_dateCriterion; -- Vaccine date recommentations - e.g. earliest date to administer, latest date to administer, etc.
+    attribute protocol : ImmunizationProfile_recommendation_protocol; -- Contains information about the protocol under which the vaccine was administered.
+    attribute supportingImmunization : Resource; -- Immunization event history that supports the status and recommendation.
+    attribute supportingAdverseEventReport : ImmunizationProfile_recommendation_supportingAdverseEventReport; -- Adverse event report information that supports the status and recommendation.
+    attribute supportingPatientObservation : Resource; -- Patient observation that supports the status and recommendation.
+  }
+
+  class ImmunizationProfile_recommendation_supportingAdverseEventReport -- Adverse event report information that supports the status and recommendation.
+  {
+    attribute identifier : id;               -- Unique identifier of the adverse event report.
+    attribute reportType : CodeableConcept;  -- Advers event report classification.
+    attribute reportDate : dateTime;         -- The date of the adverse event report.
+    attribute text : String;                 -- The content of the adverse event report.
+    attribute reaction : Resource;           -- The documented reaction described in the adverse event report.
+  }
+
+  class ImmunizationProfile_recommendation_protocol -- Contains information about the protocol under which the vaccine was administered.
+  {
+    attribute doseSequence : integer;        -- Nominal position in a series.
+    attribute description : String;          -- Contains the description about the protocol under which the vaccine was administered.
+    attribute authority : Resource;          -- Indicates the authority who published the protocol?  E.g. ACIP.
+    attribute series : String;               -- One possible path to achieve presumed immunity against a disease - within the context of an authority.
+  }
+
+  class ImmunizationProfile_recommendation_dateCriterion -- Vaccine date recommentations - e.g. earliest date to administer, latest date to administer, etc.
+  {
+    attribute code : CodeableConcept;        -- Date classification of recommendation - e.g. earliest date to give, latest date to give, etc.
+    attribute value : dateTime;              -- Date recommendation.
+  }
+
+  class RelatedPerson extends Resource       -- Information about a person that is involved in the care for a patient, but who is not the target of healthcare, nor has a formal responsibility in the care process.
+  {
+    attribute identifier : Identifier;       -- Identifier for a person within a particular scope.
+    attribute patient : Resource;            -- The patient this person is related to.
+    attribute relationship : CodeableConcept; -- The nature of the relationship between a patient and the related person.
+    attribute name : HumanName;              -- A name associated with the person.
+    attribute telecom : Contact;             -- A contact detail for the person, e.g. a telephone number or an email address.
+    attribute gender : CodeableConcept;      -- Administrative Gender - the gender that the person is considered to have for administration and record keeping purposes.
+    attribute address : Address;             -- Address where the related person can be contacted or visited.
+    attribute photo : Attachment;            -- Image of the person.
+  }
+
+  class Specimen extends Resource            -- Sample for analysis.
+  {
+    attribute identifier : Identifier;       -- Id for specimen.
+    attribute type : CodeableConcept;        -- The type of the specimen. This is sometimes called the "matrix".
+    attribute source : Specimen_source;      -- Parent specimen from which the focal specimen was a component.
+    attribute subject : Resource;            -- The subject of the report.
+    attribute accessionIdentifier : Identifier; -- The identifier(s) assigned by the lab when accessioning specimen(s). This is not necessarily the same as the specimen identifier, depending on local lab procedures.
+    attribute receivedTime : dateTime;       -- Time when specimen was received for processing or testing.
+    attribute collection : Specimen_collection; -- Details concerning the specimen collection.
+    attribute treatment : Specimen_treatment; -- Details concerning treatment and processing steps for the specimen.
+    attribute container : Specimen_container; -- The container holding the specimen. May be recursive; ie blood in tube in tray in rack.
+  }
+
+  class Specimen_source                      -- Parent specimen from which the focal specimen was a component.
+  {
+    attribute relationship : code;           -- Whether this relationship is to a parent or to a child.
+    attribute target : Resource;             -- The specimen resource that is the target of this relationship.
+  }
+
+  class Specimen_container                   -- The container holding the specimen. May be recursive; ie blood in tube in tray in rack.
+  {
+    attribute identifier : Identifier;       -- Id for container. There may be muliple; a manufacturer's bar code, lab assigned identifier, etc.
+    attribute description : String;          -- Textual description of container.
+    attribute type : CodeableConcept;        -- The type of container associated with the specimen (eg slide, aliquot, etc).
+    attribute capacity : Quantity;           -- The capacity (volume or other measure the container may contain.
+    attribute specimenQuantity : Quantity;   -- The quantity of specimen in the container; may be volume, dimensions, or other appropriate measurements, depending on the specimen type.
+    attribute additive : Resource;           -- Additive associated with the container.
+  }
+
+  class Specimen_treatment                   -- Details concerning treatment and processing steps for the specimen.
+  {
+    attribute description : String;          -- Textual description of procedure.
+    attribute procedure : CodeableConcept;   -- A coded value specifying the procedure used to process the specimen.
+    attribute additive : Resource;           -- Specimen additive.
+  }
+
+  class Specimen_collection                  -- Details concerning the specimen collection.
+  {
+    attribute collector : Resource;          -- Person who collected the specimen.
+    attribute comment : String;              -- To communicate any details or issues encountered during the specimen collection procedure.
+    attribute collectedTime : dateTime;      -- Time when specimen was collected from subject - the physiologically relevant time.
+    attribute quantity : Quantity;           -- The quantity of specimen collected; for instance the volume of a blood sample, or the physical measurement of an anatomic pathology sample.
+    attribute method : CodeableConcept;      -- A coded value specifying the technique that is used to perform the procedure.
+    attribute sourceSite : CodeableConcept;  -- Anatomical location from which the specimen should be collected (if subject is a patient).
+  }
+
+  class DeviceObservation extends Resource   -- A set of observations produced by a device.
+  {
+    attribute code : CodeableConcept;        -- A code that identifies what type of device observation this is.
+    attribute identifier : Identifier;       -- Identifiers assigned to this observation.
+    attribute issued : instant;              -- Date the measurements were made.
+    attribute subject : Resource;            -- The subject of the measurements. Usually, but not always, this is a patient. However devices are also used to make measurements on other things as well.
+    attribute device : Resource;             -- Device that produced the results.
+    attribute measurement : Resource;        -- The actual measurements that the device produced.
+  }
+
+  class Alert extends Resource               -- Prospective warnings of potential issues when providing care to the patient.
+  {
+    attribute category : CodeableConcept;    -- Allows an alert to be divided into different categories like clinical, administrative etc.
+    attribute status : code;                 -- Supports basic workflow.
+    attribute subject : Resource;            -- The person who this alert concerns.
+    attribute author : Resource;             -- The person or device that created the alert.
+    attribute note : String;                 -- The textual component of the alert to display to the user.
+  }
+
+  class Patient extends Resource             -- Demographics and other administrative information about a person or animal receiving care or other health-related services.
+  {
+    attribute identifier : Identifier;       -- An identifier that applies to this person as a patient.
+    attribute name : HumanName;              -- A name associated with the individual.
+    attribute telecom : Contact;             -- A contact detail (e.g. a telephone number or an email address) by which the individual may be contacted.
+    attribute gender : CodeableConcept;      -- Administrative Gender - the gender that the patient is considered to have for administration and record keeping purposes.
+    attribute birthDate : dateTime;          -- The date and time of birth for the individual.
+    attribute deceased : ?;                  -- Indicates if the individual is deceased or not.
+    attribute address : Address;             -- Addresses for the individual.
+    attribute maritalStatus : CodeableConcept; -- This field contains a patient's most recent marital (civil) status.
+    attribute multipleBirth : ?;             -- Indicates whether the patient is part of a multiple or indicates the actual birth order.
+    attribute photo : Attachment;            -- Image of the person.
+    attribute contact : Patient_contact;     -- A contact party (e.g. guardian, partner, friend) for the patient.
+    attribute animal : Patient_animal;       -- This element has a value if the patient is an animal.
+    attribute communication : CodeableConcept; -- Languages which may be used to communicate with the patient.
+    attribute provider : Resource;           -- The provider for whom this is a patient record.
+    attribute link : Resource;               -- A linked patient resource is a resource that concerns the same patient. Resources are linked after it is realized that at least one was created in error.
+    attribute active : boolean;              -- Whether this patient record is in active use.
+  }
+
+  class Patient_animal                       -- This element has a value if the patient is an animal.
+  {
+    attribute species : CodeableConcept;     -- Identifies the high level categorization of the kind of animal.
+    attribute breed : CodeableConcept;       -- Identifies the detailed categorization of the kind of animal.
+    attribute genderStatus : CodeableConcept; -- Indicates the current state of the animal's reproductive organs.
+  }
+
+  class Patient_contact                      -- A contact party (e.g. guardian, partner, friend) for the patient.
+  {
+    attribute relationship : CodeableConcept; -- The nature of the relationship between the patient and the contact person.
+    attribute name : HumanName;              -- A name associated with the person.
+    attribute telecom : Contact;             -- A contact detail for the person, e.g. a telephone number or an email address.
+    attribute address : Address;             -- Address for the contact person.
+    attribute gender : CodeableConcept;      -- Administrative Gender - the gender that the person is considered to have for administration and record keeping purposes.
+    attribute organization : Resource;       -- Organization on behalf of which the contact is acting or for which the contact is working.
+  }
+
+  class AdverseReaction extends Resource     -- Specific reactions to a substance.
+  {
+    attribute reactionDate : dateTime;       -- When the reaction occurred.
+    attribute subject : Resource;            -- The subject of the adverse reaction.
+    attribute didNotOccurFlag : boolean;     -- To say that a reaction to substance did not occur.
+    attribute recorder : Resource;           -- Who recorded the reaction.
+    attribute symptom : AdverseReaction_symptom; -- The signs and symptoms that were observed as part of the reaction.
+    attribute exposure : AdverseReaction_exposure; -- An exposure to a substance that preceded a reaction occurrence.
+  }
+
+  class AdverseReaction_symptom              -- The signs and symptoms that were observed as part of the reaction.
+  {
+    attribute code : CodeableConcept;        -- Indicates the specific sign or symptom that was observed.
+    attribute severity : code;               -- The severity of the sign or symptom.
+  }
+
+  class AdverseReaction_exposure             -- An exposure to a substance that preceded a reaction occurrence.
+  {
+    attribute exposureDate : dateTime;       -- When the exposure occurred.
+    attribute exposureType : code;           -- Drug Administration, Immunization, Coincidental.
+    attribute causalityExpectation : code;   -- A statement of how confident that the recorder was that this exposure caused the reaction.
+    attribute substance : Resource;          -- Substance(s) that is presumed to have caused the adverse reaction.
+  }
+
+  class DiagnosticOrder extends Resource     -- A request for a diagnostic investigation service to be performed.
+  {
+    attribute subject : Resource;            -- Who or what the investigation is to be performed on. This is usually a human patient, but diagnostic tests can also be requested on animals, groups of humans or animals, devices such as dialysis machines, or even locations (typically for environmental scans).
+    attribute orderer : Resource;            -- The practitioner that holds legal responsibility for ordering the investigation.
+    attribute identifier : Identifier;       -- Identifiers assigned to this order by the order or by the receiver.
+    attribute encounter : Resource;          -- An encounter that provides additional informaton about the healthcare context in which this request is made.
+    attribute clinicalNotes : String;        -- An explanation or justification for why this diagnostic investigation is being requested.
+    attribute specimen : Resource;           -- One or more specimens that the diagnostic investigation is about.
+    attribute status : code;                 -- The status of the order.
+    attribute priority : code;               -- The clinical priority associated with this order.
+    attribute event : DiagnosticOrder_event; -- A summary of the events of interest that have occurred as the request is processed.
+    attribute item : DiagnosticOrder_item;   -- The specific diagnostic investigations that are requested as part of this request. Sometimes, there can only be one item per request, but in most contexts, more than one investigation can be requested.
+  }
+
+  class DiagnosticOrder_event                -- A summary of the events of interest that have occurred as the request is processed.
+  {
+    attribute status : code;                 -- The status for the event.
+    attribute date : dateTime;               -- The date/time at which the event occurred.
+    attribute actor : Resource;              -- The person who was responsible for performing or recording the action.
+  }
+
+  class DiagnosticOrder_item                 -- The specific diagnostic investigations that are requested as part of this request. Sometimes, there can only be one item per request, but in most contexts, more than one investigation can be requested.
+  {
+    attribute code : CodeableConcept;        -- A code that identifies a particular diagnostic investigation that has been requested.
+    attribute specimen : Resource;           -- If the item is related to a specific speciment.
+    attribute bodySite : CodeableConcept;    -- Anatomical location where the request test should be performed.
+    attribute status : code;                 -- The status of this individual item within the order.
+    attribute event : DiagnosticOrder_event; -- A summary of the events of interest that have occurred as this item of the request is processed.
+  }
+
+}
