@@ -1,0 +1,17 @@
+A-T block vote:
+36, 46, 54, 59, 66, 67, 68, 69, 70, 75, 93, 108, 109, 193, 243, 244, 245, 246, 247, 257, 259, 260, 262, 270, 275, 466, 491, 544, 610, 632, 633, 634, 636, 639, 679, 689, 716, 717, 718, 719, 724, 725, 726, 769, 813, 819
+
+      
+<!--
+
+[1:21:54 AM] Ewout Kramer: So
+[1:22:13 AM] Ewout Kramer: gender=M ->  current :anyns = search on code, ns irrelevant
+[1:25:45 AM] Ewout Kramer: gender:code= system/code or gender:code=code  : search with ns, search for code having no ns
+[1:25:51 AM] Ewout Kramer: gender:text = xxxx
+[1:25:59 AM] Ewout Kramer: and escape / in code with \
+[1:26:10 AM] Ewout Kramer: also use \ escape for 'text' params with nested "
+[1:28:25 AM] jcmandel: Thank you for capturing that!
+[1:45:50 AM | Edited 1:46:02 AM] Ewout Kramer: Np. I also put it here so I myself can review if what we said made sense ;)
+
+-->      
+
