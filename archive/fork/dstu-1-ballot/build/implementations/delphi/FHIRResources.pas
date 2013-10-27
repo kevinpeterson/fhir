@@ -34,7 +34,7 @@ unit FHIRResources;
 
 interface
 
-// FHIR v0.11 generated Mon, Sep 30, 2013 03:15+1000
+// FHIR v0.11 generated Wed, Oct 2, 2013 07:37+1000
 
 uses
   SysUtils, Classes, StringSupport, DecimalSupport, AdvBuffers, MSSEWrap, FHIRBase, FHIRTypes, FHIRComponents;
@@ -7734,9 +7734,9 @@ Const
   TARGETS_TSearchParamsValueSet : Array[TSearchParamsValueSet] of TFhirResourceTypeSet = ([], [], [], [], [], [], [], [], []);
   FHIR_GENERATED_VERSION = '0.11';
 
-  FHIR_GENERATED_REVISION = '????';
+  FHIR_GENERATED_REVISION = '1816';
 
-  FHIR_GENERATED_DATE = '20130930031559';
+  FHIR_GENERATED_DATE = '20131002073750';
 
 
 
