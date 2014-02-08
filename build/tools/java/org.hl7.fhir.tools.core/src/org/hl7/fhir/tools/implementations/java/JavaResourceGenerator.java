@@ -49,19 +49,19 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 	public enum JavaGenClass { Structure, Type, Resource, BackboneElement, Constraint }
 	private JavaGenClass clss;
 
-	private Definitions definitions;
+	protected Definitions definitions;
 	
 	public JavaResourceGenerator(OutputStream out, Definitions definitions) throws UnsupportedEncodingException {
 		super(out);
 		this.definitions = definitions;
 	}
 
-	private Map<ElementDefn, String> typeNames = new HashMap<ElementDefn, String>();
-	private List<String> typeNameStrings = new ArrayList<String>();
+	protected Map<ElementDefn, String> typeNames = new HashMap<ElementDefn, String>();
+	protected List<String> typeNameStrings = new ArrayList<String>();
 
-	private List<ElementDefn> enums = new ArrayList<ElementDefn>();
-	private List<String> enumNames = new ArrayList<String>();
-	private List<ElementDefn> strucs  = new ArrayList<ElementDefn>();
+	protected List<ElementDefn> enums = new ArrayList<ElementDefn>();
+	protected List<String> enumNames = new ArrayList<String>();
+	protected List<ElementDefn> strucs  = new ArrayList<ElementDefn>();
 
   private String classname;
 
@@ -69,8 +69,8 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 	public Map<ElementDefn, String> getTypeNames() {
 		return typeNames;
 	}
-
-	public void generate(ElementDefn root, String name, Map<String, BindingSpecification> conceptDomains, JavaGenClass clss, DefinedCode cd, Date genDate, String version) throws Exception {
+	
+	public void generate(ElementDefn root, String packageName, String name, Map<String, BindingSpecification> conceptDomains, JavaGenClass clss, DefinedCode cd, Date genDate, String version) throws Exception {
 		typeNames.clear();
 		typeNameStrings.clear();
 		enums.clear();
@@ -78,7 +78,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 		enumNames.clear();
 		this.clss = clss;
 
-		write("package org.hl7.fhir.instance.model;\r\n");
+		write("package " + packageName + ";\r\n");
 		write("\r\n/*\r\n"+Config.FULL_LICENSE_CODE+"*/\r\n\r\n");
 		write("// Generated on "+Config.DATE_FORMAT().format(genDate)+" for FHIR v"+version+"\r\n\r\n");
     if (clss != JavaGenClass.Constraint) {
@@ -98,7 +98,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 		jdoc("", root.getDefinition());
 		classname = upFirst(name);
 		if (clss == JavaGenClass.Resource)
-			write("public class "+upFirst(name)+" extends Resource {\r\n");
+			write("public class "+upFirst(name)+" extends Resource implements " + packageName + ".intf." + classname + " {\r\n");
     else if (clss == JavaGenClass.Structure)
       write("public class "+upFirst(name)+" extends Element {\r\n");
     else if (clss == JavaGenClass.BackboneElement)
@@ -108,7 +108,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 	  else if (root.getName().equals("Quantity"))
 			write("public class "+upFirst(name)+" extends Type {\r\n");
 		else
-			write("public class "+upFirst(name)+" extends Type {\r\n");
+			write("public class "+upFirst(name) + " extends Type {\r\n");
 		write("\r\n");
 
 		if (clss != JavaGenClass.Constraint) {
@@ -161,7 +161,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 
 	}
 
-  private void jdoc(String indent, String text) throws IOException {
+    protected void jdoc(String indent, String text) throws IOException {
     write(indent+"/**\r\n");
 		write(indent+" * "+text+"\r\n");
 		write(indent+" */\r\n");
@@ -197,7 +197,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
     write(indent+"  }\r\n\r\n");
   }
 
-  private String upFirst(String name) {
+  protected String upFirst(String name) {
 		return name.substring(0,1).toUpperCase()+name.substring(1);
 	}
 
@@ -236,7 +236,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 
 
 
-	private boolean hasList(ElementDefn root) {
+	protected boolean hasList(ElementDefn root) {
 		for (ElementDefn e : root.getElements()) {
 			if (!e.getName().equals("text")) {
 				if (e.unbounded() || hasListInner(e))
@@ -246,7 +246,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 		return false;
 	}
 
-  private boolean hasDecimal(ElementDefn root) {
+  protected boolean hasDecimal(ElementDefn root) {
     for (ElementDefn e : root.getElements()) {
       if (e.typeCode().equals("decimal") || hasDecimalInner(e))
         return true;
@@ -254,7 +254,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
     return false;
   }
 
-	private boolean hasXhtml(ElementDefn root) {
+	protected boolean hasXhtml(ElementDefn root) {
 		for (ElementDefn e : root.getElements()) {
 			if (e.isXhtmlElement() || hasXhtmlInner(e))
 				return true;
@@ -262,7 +262,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 		return false;
 	}
 
-	private boolean hasListInner(ElementDefn e) {
+	protected boolean hasListInner(ElementDefn e) {
 		for (ElementDefn c : e.getElements()) {
 			if (c.unbounded() || hasListInner(c))
 				return true;
@@ -271,7 +271,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 		return false;
 	}
 
-	private boolean hasXhtmlInner(ElementDefn e) {
+	protected boolean hasXhtmlInner(ElementDefn e) {
 		for (ElementDefn c : e.getElements()) {
 			if (c.isXhtmlElement() || hasXhtmlInner(c))
 				return true;
@@ -280,7 +280,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 		return false;
 	}
 
-  private boolean hasDecimalInner(ElementDefn e) {
+  protected boolean hasDecimalInner(ElementDefn e) {
     for (ElementDefn c : e.getElements()) {
       if (c.typeCode().equals("decimal") || hasDecimalInner(c))
         return true;
@@ -516,7 +516,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
     }
   }
 
-  private void scanNestedTypes(ElementDefn root, String path, ElementDefn e, Map<String, BindingSpecification> conceptDomains) throws Exception {
+  protected void scanNestedTypes(ElementDefn root, String path, ElementDefn e, Map<String, BindingSpecification> conceptDomains) throws Exception {
 		String tn = null;
 		if (e.typeCode().equals("code") && e.hasBinding()) {
 			BindingSpecification cd = getConceptDomain(conceptDomains, e.getBindingName());
@@ -659,7 +659,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 	}
 
 
-  private String getSimpleType(String n) {
+  protected String getSimpleType(String n) {
     if (n.equals("String_"))
       return "String";
     if (n.equals("Code"))

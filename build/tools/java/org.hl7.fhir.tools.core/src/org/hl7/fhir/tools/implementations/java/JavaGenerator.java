@@ -72,6 +72,8 @@ public class JavaGenerator extends BaseGenerator implements PlatformGenerator {
   
   private String rootDir;
   private String javaDir;
+  private String packageName;
+  private String javaIntfDir;
   private String javaParserDir;
   private Definitions definitions;
   private Logger logger;
@@ -89,24 +91,43 @@ public String getDescription() {
   @Override
 public void generate(Definitions definitions, String destDir, String implDir, String version, Date genDate, Logger logger, String svnRevision) throws Exception {
     char sl = File.separatorChar;
-    javaDir       =  implDir+"org.hl7.fhir.instance"+sl+"src"+ sl+"org"+sl+"hl7"+sl+"fhir"+sl+"instance"+sl+"model"+sl;
+    packageName   =  "org.hl7.fhir.instance.model";
+    javaDir       =  implDir+"org.hl7.fhir.instance"+sl+"src"+ sl + packageName.replace( '.', sl ) + sl;
+    javaIntfDir   =  implDir+"org.hl7.fhir.instance"+sl+"src"+ sl  + packageName.replace( '.', sl ) + sl + "intf" + sl;
     javaParserDir =  implDir+"org.hl7.fhir.instance"+sl+"src"+sl+"org"+sl+"hl7"+sl+"fhir"+sl+"instance"+sl+"formats"+sl;
     this.definitions = definitions;
     this.logger = logger;
 
+    File intfDir = new File( javaIntfDir );
+    if ( ! intfDir.exists() ) {
+      intfDir.mkdirs();
+    }
+    
     for (String n : definitions.getDeletedResources()) {
-      File f = new File(implDir+"org.hl7.fhir.instance"+sl+"src"+ sl+"org"+sl+"hl7"+sl+"fhir"+sl+"instance"+sl+"model"+sl+n+".java");
-      if (f.exists())
+      File f = new File(implDir+"org.hl7.fhir.instance"+sl+"src"+ sl + packageName.replace( '.', sl ) + sl + n + ".java");
+      if (f.exists()) {
         f.delete();
+      }
+      File i = new File(implDir+"org.hl7.fhir.instance"+sl+"src"+ sl + packageName.replace( '.', sl ) + sl + "intf" + sl + n + ".java");
+      if (i.exists()) {
+        i.delete();
+      }
     }
     JavaFactoryGenerator jFactoryGen = new JavaFactoryGenerator(new FileOutputStream(javaDir+"ResourceFactory.java"));
     
     generateResourceTypeEnum();
     for (String n : definitions.getResources().keySet()) {
       ResourceDefn root = definitions.getResourceByName(n); 
+      
       JavaResourceGenerator jrg = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName())+".java"), definitions);
-      jrg.generate(root.getRoot(), javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Resource, null, genDate, version);
+      jrg.generate(root.getRoot(), packageName, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Resource, null, genDate, version);
       jrg.close();
+      
+      JavaResourceInterfaceGenerator jig = new JavaResourceInterfaceGenerator(new FileOutputStream(javaIntfDir + javaClassName(root.getName())+".java"), definitions);
+      jig.generate(root.getRoot(), packageName, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Resource, null, genDate, version);
+      jig.close();
+
+      
       jFactoryGen.registerResource(n,  root.getName());
     }
 
@@ -115,7 +136,7 @@ public void generate(Definitions definitions, String destDir, String implDir, St
       ElementDefn e = new ElementDefn();
       e.setName(resource.getName());
       JavaResourceGenerator jrg = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(e.getName())+".java"), definitions);
-      	jrg.generate(e, javaClassName(e.getName()), definitions.getBindings(), JavaGenClass.Resource, null, genDate, version);
+      	jrg.generate(e, packageName, javaClassName(e.getName()), definitions.getBindings(), JavaGenClass.Resource, null, genDate, version);
       	jrg.close();
       jFactoryGen.registerResource(resource.getName(),  e.getName());
     }
@@ -123,14 +144,14 @@ public void generate(Definitions definitions, String destDir, String implDir, St
     for (String n : definitions.getInfrastructure().keySet()) {
       ElementDefn root = definitions.getInfrastructure().get(n); 
       JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName())+".java"), definitions);
-      jgen.generate(root, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Structure, null, genDate, version);
+      jgen.generate(root, packageName, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Structure, null, genDate, version);
       jgen.close();
       jFactoryGen.registerType(n,  root.getName());
     }
     for (String n : definitions.getTypes().keySet()) {
       ElementDefn root = definitions.getTypes().get(n); 
       JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName())+".java"), definitions);
-      jgen.generate(root, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Type, null, genDate, version);
+      jgen.generate(root, packageName, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Type, null, genDate, version);
       jgen.close();
       if (root.typeCode().equals("GenericType")) {
         for (TypeRef td : definitions.getKnownTypes()) {
@@ -146,7 +167,7 @@ public void generate(Definitions definitions, String destDir, String implDir, St
     for (DefinedCode cd : definitions.getConstraints().values()) {
       ElementDefn root = definitions.getTypes().get(cd.getComment()); 
       JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(cd.getCode())+".java"), definitions);
-      jgen.generate(root, javaClassName(cd.getCode()), definitions.getBindings(), JavaGenClass.Constraint, cd, genDate, version);
+      jgen.generate(root, packageName, javaClassName(cd.getCode()), definitions.getBindings(), JavaGenClass.Constraint, cd, genDate, version);
       jFactoryGen.registerType(cd.getCode(), cd.getCode()); 
       jgen.close();
     }
@@ -154,7 +175,7 @@ public void generate(Definitions definitions, String destDir, String implDir, St
     for (String n : definitions.getStructures().keySet()) {
       ElementDefn root = definitions.getStructures().get(n); 
       JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName())+".java"), definitions);
-      jgen.generate(root, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Type, null, genDate, version);
+      jgen.generate(root, packageName, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Type, null, genDate, version);
       jFactoryGen.registerType(n,  root.getName());
       jgen.close();
     }
@@ -228,7 +249,7 @@ public void generate(Definitions definitions, String destDir, String implDir, St
     else 
       return name;
   }
-
+  
   private String getTitle(String n) {
     return n.substring(0,1).toUpperCase()+n.substring(1);
   }
