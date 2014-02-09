@@ -226,10 +226,6 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
     write("\r\n");
   }
 
-  private String upFirst(String n) {
-    return n.substring(0,1).toUpperCase() + n.substring(1);
-  }
-
   private void start(String version, Date genDate) throws Exception {
 
     write("package org.hl7.fhir.instance.formats;\r\n");

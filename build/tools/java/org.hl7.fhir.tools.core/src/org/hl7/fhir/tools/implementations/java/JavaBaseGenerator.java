@@ -95,4 +95,8 @@ public class JavaBaseGenerator extends OutputStreamWriter {
 	protected String getTitle(String name) {
 		return Utilities.noString(name) ? "Value" : name.substring(0, 1).toUpperCase()+ name.substring(1);
 	}
+
+    protected String upFirst(String name) {
+        return name.substring(0,1).toUpperCase()+name.substring(1);
+    }
 }

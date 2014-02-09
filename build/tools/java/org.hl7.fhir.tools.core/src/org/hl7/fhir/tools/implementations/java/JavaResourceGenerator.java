@@ -98,7 +98,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 		jdoc("", root.getDefinition());
 		classname = upFirst(name);
 		if (clss == JavaGenClass.Resource)
-			write("public class "+upFirst(name)+" extends Resource implements " + packageName + ".intf." + classname + " {\r\n");
+			write("public class "+upFirst(name)+" extends Resource implements " + packageName + ".intf." + classname + "Resource {\r\n");
     else if (clss == JavaGenClass.Structure)
       write("public class "+upFirst(name)+" extends Element {\r\n");
     else if (clss == JavaGenClass.BackboneElement)
@@ -108,7 +108,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 	  else if (root.getName().equals("Quantity"))
 			write("public class "+upFirst(name)+" extends Type {\r\n");
 		else
-			write("public class "+upFirst(name) + " extends Type {\r\n");
+			write("public class "+upFirst(name)+ genericParams(name) + " extends Type {\r\n");
 		write("\r\n");
 
 		if (clss != JavaGenClass.Constraint) {
@@ -161,6 +161,14 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 
 	}
 
+    private String genericParams( String name ) {
+        if ("ResourceReference".equals( name ) ) {
+            return "<T>";
+        } else {
+            return "";
+        }
+    }
+
     protected void jdoc(String indent, String text) throws IOException {
     write(indent+"/**\r\n");
 		write(indent+" * "+text+"\r\n");
@@ -197,9 +205,6 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
     write(indent+"  }\r\n\r\n");
   }
 
-  protected String upFirst(String name) {
-		return name.substring(0,1).toUpperCase()+name.substring(1);
-	}
 
 	//	private void generateSetters(ElementDefn root, String indent) throws Exception {
 	//		boolean first = true;

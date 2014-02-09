@@ -32,14 +32,17 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.hl7.fhir.definitions.Config;
 import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.DefinedCode;
 import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
+import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.tools.implementations.java.JavaResourceGenerator.JavaGenClass;
 
 public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
@@ -74,7 +77,7 @@ public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
         }
 
 
-        write( "public interface " + upFirst(name) +" {\r\n" );
+        write( "public interface " + upFirst(name) + "Resource extends " + upFirst(name) + " {\r\n" );
         write("\r\n");
 
         for ( ElementDefn e : root.getElements() ) {
@@ -129,6 +132,7 @@ public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
 
     private void generateAccessors(ElementDefn root, ElementDefn e, String indent, String className) throws Exception {
         String tn = typeNames.get(e);
+        String paramTn = tn; //addGenericParams( tn, e );
 
         if (e.unbounded()) {
             //jdoc(indent, "@return {@link #"+getElementName(e.getName(), true)+"} ("+e.getDefinition()+")");
@@ -147,8 +151,7 @@ public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
             }
         } else {
             //jdoc(indent, "@return {@link #"+getElementName(e.getName(), true)+"} ("+e.getDefinition()+")");
-            write(indent+"public "+tn+" get"+getTitle(getElementName(e.getName(), false))+"(); \r\n");
-            write("// import " + tn);
+            write(indent+"public "+paramTn+" get"+getTitle(getElementName(e.getName(), false))+"(); \r\n");
 
             write("\r\n");
 
@@ -169,6 +172,28 @@ public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
         }
 
     }
+
+//    private String addGenericParams( String tn, ElementDefn e ) {
+//        if ( "ResourceReference".equals( tn ) && ! e.getTypes().isEmpty() ) {
+//            for ( Iterator<TypeRef> types = e.getTypes().iterator(); types.hasNext(); ) {
+//                TypeRef ref = types.next();
+//                if ( "Resource".equals( ref.getName() ) && ref.hasParams() ) {
+//                    boolean first = true;
+//
+//                    for ( Iterator<String> params = ref.getParams().iterator(); params.hasNext(); ) {
+//                        if ( first ) {
+//                            first = false;
+//                        } else {
+//                            paramList += " & ";
+//                        }
+//                        paramList += params.next();
+//                    }
+//                    return "<" + paramList + "> " + tn + "<T>";
+//                }
+//            }
+//        }
+//        return tn;
+//    }
 
     protected Boolean needsPrimitiveType (String n) {
         if (n.equals("String_"))
