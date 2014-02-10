@@ -150,7 +150,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 		}
 
         if ( isResource( classname ) ) {
-            generateResourceReferenceMethods( );
+            generateResourceReferenceMethods();
         } else {
 		    generateCopy(root, classname, false, aliases);
         }
@@ -162,8 +162,12 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 
           write("  public boolean isReference() { return false; } \r\n");
 
-          write("  public ResourceReference asReference() { \r\n" );
+          write("  public " + packageName + ".refs." + classname + "_Reference asReference() { \r\n" );
           write("     return new " + packageName + ".refs." + classname + "_Reference(); \r\n" );
+          write("  }\r\n");
+
+          write("  public " + classname + " asResource() { \r\n" );
+          write("     return this; \r\n" );
           write("  }\r\n");
 
             write("\r\n");
@@ -179,7 +183,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 
     private void generateResourceReferenceMethods() throws IOException {
 //        write( "  public ResourceReference<T> copy(); \r\n" );
-//        write( "  protected Type typedCopy() { return copy(); } \r\n\r\n");
+        write( "  protected Type typedCopy() { return copy(); } \r\n\r\n");
         write( "  public T resolveReference() { return null; } " );
     }
 

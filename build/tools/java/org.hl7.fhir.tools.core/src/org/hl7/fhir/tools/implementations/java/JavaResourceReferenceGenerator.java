@@ -17,7 +17,7 @@ public class JavaResourceReferenceGenerator extends JavaBaseGenerator {
         super( out );
     }
 
-    public void generate( ElementDefn root, String packageName, String name, Set<String> ancestors, Date genDate, String version ) throws IOException {
+    public void generate( ElementDefn root, String packageName, String name, boolean primitive, Set<String> ancestors, Date genDate, String version ) throws IOException {
         write( "package " + packageName +".refs; \r\n" );
         write("\r\n/*\r\n"+ Config.FULL_LICENSE_CODE+"*/\r\n\r\n");
         write("// Generated on "+Config.DATE_FORMAT().format(genDate)+" for FHIR v"+version+"\r\n\r\n");
@@ -36,7 +36,11 @@ public class JavaResourceReferenceGenerator extends JavaBaseGenerator {
 
         generateResolver( name );
 
-        write( "public ResourceReference asReference() { return this; } \r\n" );
+        write( "public " + upFirst( name ) + "_Reference asReference() { return this; } \r\n" );
+
+        String resolveType = packageName + "." + ( primitive ? upFirst( name ) : "Resource" );
+        write( "public " + resolveType + " asResource() { return (" +  resolveType + ") resolveReference(); } \r\n" );
+
         write( "public boolean isReference() { return true; } \r\n" );
 
         write("} \r\n");

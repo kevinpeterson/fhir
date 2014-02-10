@@ -19,7 +19,7 @@ public class JavaTypeInterfaceGenerator extends JavaBaseGenerator {
     }
 
 
-    public void generate( String packageName, String name, Set<String> ancestors, Date genDate, String version ) throws IOException {
+    public void generate( String packageName, String name, boolean isPrimitive, Set<String> ancestors, Date genDate, String version ) throws IOException {
         write( "package " + packageName +".intf; \r\n" );
         write("\r\n/*\r\n"+ Config.FULL_LICENSE_CODE+"*/\r\n\r\n");
         write("// Generated on "+Config.DATE_FORMAT().format(genDate)+" for FHIR v"+version+"\r\n\r\n");
@@ -34,7 +34,10 @@ public class JavaTypeInterfaceGenerator extends JavaBaseGenerator {
         //write( "public " + upFirst( name ) + " copy(); \r\n" );
 
         write( "\r\n" );
-        write( "    public ResourceReference asReference(); \r\n" );
+        write( "    public " + packageName + ".ResourceReference<? extends " + upFirst( name ) + "> asReference(); \r\n" );
+        write( "\r\n" );
+        write( "\r\n" );
+        write( "    public " + packageName + "." + ( isPrimitive ? upFirst( name ) : "Resource" ) + " asResource(); \r\n" );
         write( "\r\n" );
         write( "\r\n" );
         write( "    public boolean isReference(); \r\n" );

@@ -77,6 +77,8 @@ public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
         }
 
 
+
+
         write( "public interface " + upFirst(name) + "Resource extends " + upFirst(name) + " {\r\n" );
         write("\r\n");
 
@@ -86,9 +88,10 @@ public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
             }
         }
 
-        write("}\r\n");
+        write( "\tpublic " + packageName + ".ResourceReference<? extends " + upFirst( name ) + "> asReference(); \r\n" );
 
-        write("\r\n");
+
+        write("} \r\n");
         flush();
 
     }
@@ -165,7 +168,7 @@ public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
                 write("\r\n");
 
                 //jdoc(indent, "@param value "+e.getDefinition());
-                write(indent+"public "+className+" set"+getTitle(getElementName(e.getName(), false))+"Simple("+getSimpleType(tn)+" value); \r\n");
+                write(indent+"public "+className+"Resource set"+getTitle(getElementName(e.getName(), false))+"Simple("+getSimpleType(tn)+" value); \r\n");
                 write("\r\n");
 
             }

@@ -148,13 +148,14 @@ public void generate(Definitions definitions, String destDir, String implDir, St
     }
 
     for ( String typeKey : hierarchy.getTypes().keySet() ) {
+      boolean primitive = definitions.getResources().containsKey( typeKey );
       JavaTypeInterfaceGenerator jtg = new JavaTypeInterfaceGenerator(new FileOutputStream(javaIntfDir + javaClassName( typeKey, aliases ) + ".java"));
-      jtg.generate(packageName, javaClassName( typeKey, aliases ), hierarchy.getAncestors( typeKey ), genDate, version );
+      jtg.generate(packageName, javaClassName( typeKey, aliases ), primitive, hierarchy.getAncestors( typeKey ), genDate, version );
       jtg.close();
 
       ElementDefn root = definitions.getTypes().get( "ResourceReference" );
       JavaResourceReferenceGenerator jrg = new JavaResourceReferenceGenerator(new FileOutputStream(javaRefsDir + javaClassName( typeKey, aliases ) + "_Reference.java"));
-      jrg.generate(root, packageName, javaClassName( typeKey, aliases ), hierarchy.getAncestors( typeKey ), genDate, version );
+      jrg.generate(root, packageName, javaClassName( typeKey, aliases ), primitive, hierarchy.getAncestors( typeKey ), genDate, version );
       jrg.close();
     }
 

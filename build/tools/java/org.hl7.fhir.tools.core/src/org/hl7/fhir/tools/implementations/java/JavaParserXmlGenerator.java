@@ -90,9 +90,16 @@ public class JavaParserXmlGenerator extends JavaBaseGenerator {
     for (ElementDefn n : definitions.getTypes().values()) {
       generate(n, JavaGenClass.Type, aliases);
       String an = n.getName().equals("ResourceReference") ? "Resource" : n.getName();
-      regt.append("    else if (xpp.getName().equals(prefix+\""+an+"\"))\r\n      return parse"+n.getName()+"(xpp);\r\n");
-      regf.append("    else if (type.equals(\""+n.getName()+"\"))\r\n      return parse"+n.getName()+"(xpp);\r\n");
-      regn.append("    if (xpp.getName().equals(prefix+\""+an+"\"))\r\n      return true;\r\n");
+
+        if ( super.isResource( n.getName() ) ) {
+            regf.append("    else if (type.equals(\""+n.getName()+"\"))\r\n      return parse"+n.getName()+"(xpp, new ResourceReference() );\r\n");
+            regt.append("    else if (xpp.getName().equals(prefix+\""+an+"\"))\r\n      return parse"+n.getName()+"(xpp, new ResourceReference() );\r\n");
+        } else {
+            regf.append("    else if (type.equals(\""+n.getName()+"\"))\r\n      return parse"+n.getName()+"(xpp);\r\n");
+            regt.append("    else if (xpp.getName().equals(prefix+\""+an+"\"))\r\n      return parse"+n.getName()+"(xpp);\r\n");
+        }
+
+        regn.append("    if (xpp.getName().equals(prefix+\""+an+"\"))\r\n      return true;\r\n");
     }
 
     for (DefinedCode n : definitions.getConstraints().values()) {
@@ -113,7 +120,7 @@ public class JavaParserXmlGenerator extends JavaBaseGenerator {
     for (String s : definitions.sortedResourceNames()) {
       ResourceDefn n = definitions.getResources().get(s);
       generate(n.getRoot(), JavaGenClass.Resource, aliases);
-      reg.append("    else if (xpp.getName().equals(\""+n.getName()+"\"))\r\n      return parse"+javaClassName(n.getName())+"(xpp);\r\n");
+      reg.append( "    else if (xpp.getName().equals(\"" + n.getName() + "\"))\r\n      return parse" + javaClassName( n.getName() ) + "(xpp);\r\n" );
       regf.append("    else if (type.equals(\""+n.getName()+"\"))\r\n      return parse"+javaClassName(n.getName())+"(xpp);\r\n");
       regn.append("    if (xpp.getName().equals(prefix+\""+n.getName()+"\"))\r\n      return true;\r\n");
     }
