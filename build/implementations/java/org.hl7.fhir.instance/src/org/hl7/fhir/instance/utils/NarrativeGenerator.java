@@ -206,9 +206,9 @@ public class NarrativeGenerator {
 
     XhtmlNode p = x.addTag("p");
     p.addText("Mapping from ");
-    AddVsRef(cm.getSource().getReferenceSimple(), p);
+    AddVsRef(cm.getSource().asReference().getReferenceSimple(), p);
     p.addText(" to ");
-    AddVsRef(cm.getTarget().getReferenceSimple(), p);
+    AddVsRef(cm.getTarget().asReference().getReferenceSimple(), p);
     
     p = x.addTag("p");
     if (cm.getExperimentalSimple())
@@ -468,7 +468,6 @@ public class NarrativeGenerator {
    * the purposes of the build. This is to be reviewed in the future.
    *  
    * @param vs
-   * @param codeSystems
    * @throws Exception
    */
   public void generate(ValueSet vs) throws Exception {
@@ -491,10 +490,10 @@ public class NarrativeGenerator {
     boolean hasExtensions = false;
     Map<ConceptMap, String> mymaps = new HashMap<ConceptMap, String>();
     for (AtomEntry<ConceptMap> a : maps.values()) {
-      if (a.getResource().getSource().getReferenceSimple().equals(vs.getIdentifierSimple())) {
+      if (a.getResource().getSource().asReference().getReferenceSimple().equals(vs.getIdentifierSimple())) {
         String url = "";
-        if (valueSets.containsKey(a.getResource().getTarget().getReferenceSimple()))
-            url = valueSets.get(a.getResource().getTarget().getReferenceSimple()).getLinks().get("path");
+        if (valueSets.containsKey(a.getResource().getTarget().asReference().getReferenceSimple()))
+            url = valueSets.get(a.getResource().getTarget().asReference().getReferenceSimple()).getLinks().get("path");
         mymaps.put(a.getResource(), url);
       }
     }
@@ -521,10 +520,10 @@ public class NarrativeGenerator {
     boolean hasExtensions = false;
     Map<ConceptMap, String> mymaps = new HashMap<ConceptMap, String>();
     for (AtomEntry<ConceptMap> a : maps.values()) {
-      if (a.getResource().getSource().getReferenceSimple().equals(vs.getIdentifierSimple())) {
+      if (a.getResource().getSource().asReference().getReferenceSimple().equals(vs.getIdentifierSimple())) {
         String url = "";
-        if (valueSets.containsKey(a.getResource().getTarget().getReferenceSimple()))
-            url = valueSets.get(a.getResource().getTarget().getReferenceSimple()).getLinks().get("path");
+        if (valueSets.containsKey(a.getResource().getTarget().asReference().getReferenceSimple()))
+            url = valueSets.get(a.getResource().getTarget().asReference().getReferenceSimple()).getLinks().get("path");
         mymaps.put(a.getResource(), url);
       }
     }
@@ -950,8 +949,7 @@ public class NarrativeGenerator {
    * This generate is optimised for the build tool in that it tracks the source extension. 
    * But it can be used for any other use.
    *  
-   * @param vs
-   * @param codeSystems
+   * @param op
    * @throws Exception
    */
   public void generate(OperationOutcome op) throws Exception {
@@ -1050,8 +1048,8 @@ public class NarrativeGenerator {
       tr.addTag("td").addText(r.getTypeSimple());
       if (r.getProfile() != null) {
       	XhtmlNode a = tr.addTag("td").addTag("a");
-      	a.addText(r.getProfile().getReferenceSimple());
-      	a.setAttribute("href", prefix+r.getProfile().getReferenceSimple());
+      	a.addText(r.getProfile().asReference().getReferenceSimple());
+      	a.setAttribute("href", prefix+r.getProfile().asReference().getReferenceSimple());
       }
       tr.addTag("td").addText(showOp(r, TypeRestfulOperation.read));
       tr.addTag("td").addText(showOp(r, TypeRestfulOperation.vread));

@@ -24,10 +24,22 @@ public class JavaTypeInterfaceGenerator extends JavaBaseGenerator {
         write("\r\n/*\r\n"+ Config.FULL_LICENSE_CODE+"*/\r\n\r\n");
         write("// Generated on "+Config.DATE_FORMAT().format(genDate)+" for FHIR v"+version+"\r\n\r\n");
 
+        write( "import " + packageName + ".ResourceReference; \r\n" );
+
         write( "public interface "
                + upFirst(name)
                + ( "Any".equals( name ) ? "" : formatSupers( ancestors ) )
                + " {\r\n" );
+
+        //write( "public " + upFirst( name ) + " copy(); \r\n" );
+
+        write( "\r\n" );
+        write( "    public ResourceReference asReference(); \r\n" );
+        write( "\r\n" );
+        write( "\r\n" );
+        write( "    public boolean isReference(); \r\n" );
+        write( "\r\n" );
+
         write("} \r\n");
 
     }

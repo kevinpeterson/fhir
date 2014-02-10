@@ -53,7 +53,7 @@ public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
     }
 
 
-    public void generate(ElementDefn root, String packageName, String name, Map<String, BindingSpecification> conceptDomains, JavaGenClass clss, DefinedCode cd, Date genDate, String version) throws Exception {
+    public void generate(ElementDefn root, String packageName, String name, Map<String, BindingSpecification> conceptDomains, JavaGenClass clss, DefinedCode cd, Map<String,String> aliases , Date genDate, String version) throws Exception {
 
         for (ElementDefn e : root.getElements()) {
             if ((!e.getName().equals("extension") && !e.getName().equals("text"))) {
@@ -82,7 +82,7 @@ public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
 
         for ( ElementDefn e : root.getElements() ) {
             if ( !e.getName().equals("extension") && !e.getName().equals("text") ) {
-                generateAccessors(root, e, "    ", upFirst(name));
+                generateAccessors(root, e, "    ", upFirst(name), aliases);
             }
         }
 
@@ -130,8 +130,8 @@ public class JavaResourceInterfaceGenerator extends JavaResourceGenerator {
     }
 
 
-    private void generateAccessors(ElementDefn root, ElementDefn e, String indent, String className) throws Exception {
-        String tn = typeNames.get(e);
+    private void generateAccessors(ElementDefn root, ElementDefn e, String indent, String className, Map<String,String> aliases ) throws Exception {
+        String tn = determineType( typeNames, e, aliases );
         String paramTn = tn; //addGenericParams( tn, e );
 
         if (e.unbounded()) {

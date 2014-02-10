@@ -46,7 +46,7 @@ import org.hl7.fhir.definitions.model.ResourceDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
 import org.hl7.fhir.tools.implementations.GeneratorUtils;
 
-public class JavaComposerJsonGenerator extends OutputStreamWriter {
+public class JavaComposerJsonGenerator extends JavaBaseGenerator {
   public enum JavaGenClass { Structure, Type, Resource, Constraint, Backbone }
 
   private Definitions definitions;
@@ -68,10 +68,10 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
 
   
   public JavaComposerJsonGenerator(OutputStream out) throws UnsupportedEncodingException {
-    super(out, "UTF-8");
+      super(out);
   }
 
-  public void generate(Definitions definitions, String version, Date genDate) throws Exception {
+  public void generate(Definitions definitions, Map<String,String> aliases, String version, Date genDate) throws Exception {
 
     this.definitions = definitions;
     
@@ -83,13 +83,13 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
       generatePrimitive(dc);
     
     for (ElementDefn n : definitions.getInfrastructure().values()) {
-      generate(n, JavaGenClass.Structure);
+      generate(n, JavaGenClass.Structure, aliases);
 //      String t = upFirst(n.getName());
 //      regt.append("    else if (type instanceof "+t+")\r\n       compose"+n.getName()+"(prefix+\""+n.getName()+"\", ("+t+") type);\r\n");
     }
     
     for (ElementDefn n : definitions.getTypes().values()) {
-      generate(n, JavaGenClass.Type);
+      generate(n, JavaGenClass.Type, aliases);
       if (n.getName().equals("ResourceReference"))
         regtn.append("    else if (type instanceof "+n.getName()+")\r\n       compose"+n.getName()+"(prefix+\"Resource\", ("+n.getName()+") type);\r\n");
       else
@@ -97,11 +97,11 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
     }
 
     for (DefinedCode n : definitions.getConstraints().values()) {
-      generateConstraint(n);
+      generateConstraint(n,aliases);
       regtp.append("    else if (type instanceof "+n.getCode()+")\r\n       compose"+n.getCode()+"(prefix+\""+n.getCode()+"\", ("+n.getCode()+") type);\r\n");
     }
     for (ElementDefn n : definitions.getStructures().values()) {
-      generate(n, JavaGenClass.Structure);
+      generate(n, JavaGenClass.Structure,aliases);
       regtn.append("    else if (type instanceof "+n.getName()+")\r\n       compose"+n.getName()+"(prefix+\""+n.getName()+"\", ("+n.getName()+") type);\r\n");
     }
     
@@ -109,7 +109,7 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
 
     for (String s : definitions.sortedResourceNames()) {
       ResourceDefn n = definitions.getResources().get(s);
-      generate(n.getRoot(), JavaGenClass.Resource);
+      generate(n.getRoot(), JavaGenClass.Resource,aliases);
       String nn = javaClassName(n.getName());
       reg.append("    else if (resource instanceof "+nn+")\r\n      compose"+nn+"(\""+n.getName()+"\", ("+nn+")resource);\r\n");
       regn.append("    else if (resource instanceof "+nn+")\r\n      compose"+nn+"(name, ("+nn+")resource);\r\n");
@@ -181,9 +181,6 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
       return name;
   }
 
-  private String upFirst(String n) {
-    return n.substring(0,1).toUpperCase() + n.substring(1);
-  }
 
   private void start(String version, Date genDate) throws Exception {
 
@@ -265,7 +262,7 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
   }
 
 
-  private void generate(ElementDefn n, JavaGenClass clss) throws Exception {
+  private void generate(ElementDefn n, JavaGenClass clss, Map<String,String> aliases) throws Exception {
     typeNames.clear();
     typeNameStrings.clear();
     enums.clear();
@@ -277,15 +274,15 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
     }
     context = nn;
 
-    genInner(n, clss);
+    genInner(n, clss, aliases);
     
     for (ElementDefn e : strucs) {
-      genInner(e, clss == JavaGenClass.Resource ? JavaGenClass.Backbone : JavaGenClass.Structure);
+      genInner(e, clss == JavaGenClass.Resource ? JavaGenClass.Backbone : JavaGenClass.Structure, aliases);
     }
 
   }
 
-  private void generateConstraint(DefinedCode cd) throws Exception {
+  private void generateConstraint(DefinedCode cd, Map<String,String> aliases) throws Exception {
     typeNames.clear();
     typeNameStrings.clear();
     enums.clear();
@@ -299,15 +296,15 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
         scanNestedTypes(n, n.getName(), e);
     }
 
-    genInner(n, JavaGenClass.Constraint);
+    genInner(n, JavaGenClass.Constraint, aliases);
     
     for (ElementDefn e : strucs) {
-      genInner(e, JavaGenClass.Structure);
+      genInner(e, JavaGenClass.Structure, aliases);
     }
 
   }
 
-  private void genInner(ElementDefn n, JavaGenClass clss) throws IOException, Exception {
+  private void genInner(ElementDefn n, JavaGenClass clss, Map<String,String> aliases) throws IOException, Exception {
     String tn = typeNames.containsKey(n) ? typeNames.get(n) : javaClassName(n.getName());
     
     write("  private void compose"+upFirst(tn).replace(".", "").replace("<", "_").replace(">", "")+"(String name, "+tn+" element) throws Exception {\r\n");
@@ -323,7 +320,7 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
     else
       write("      composeElement(element);\r\n");
     for (ElementDefn e : n.getElements()) 
-      genElement(n, e, clss);
+      genElement(n, e, clss, aliases);
     if (clss != JavaGenClass.Resource) 
     write("      close();\r\n");
     write("    }\r\n");    
@@ -338,7 +335,7 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
     return tn.substring(tn.indexOf('.')+1);
   }
 
-  private void genElement(ElementDefn root, ElementDefn e, JavaGenClass clss) throws Exception {
+  private void genElement(ElementDefn root, ElementDefn e, JavaGenClass clss, Map<String,String> aliases) throws Exception {
     String name = e.getName();
     if (name.endsWith("[x]") || name.equals("[type]")) {
       String en = name.endsWith("[x]") & !name.equals("[x]") ? name.replace("[x]", "") : "value";
@@ -408,8 +405,13 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
             write("        }\r\n");
           } else {
             write("        openArray(\""+name+"\");\r\n");
-            write("        for ("+(tn.contains("(") ? PrepGenericTypeName(tn) : upFirst(tn))+" e : element.get"+upFirst(getElementName(name, false))+"()) \r\n");
-            write("          "+comp+"(null, e);\r\n");
+              if ( super.isResource( tn ) ) {
+                  write("        for ("+ determineType( typeNames, e, aliases ) +" e : element.get"+upFirst(getElementName(name, false))+"()) \r\n");
+                  write("          "+comp+"(null, e.asReference());\r\n");
+              } else {
+                  write("        for ("+(tn.contains("(") ? PrepGenericTypeName(tn) : upFirst(tn))+" e : element.get"+upFirst(getElementName(name, false))+"()) \r\n");
+                  write("          "+comp+"(null, e);\r\n");
+              }
             write("        closeArray();\r\n");
           }
   	    } else {
@@ -434,10 +436,15 @@ public class JavaComposerJsonGenerator extends OutputStreamWriter {
       } else if (isPrimitive(e)) {
         write("      "+comp+"Core(\""+name+"\", element.get"+upFirst(getElementName(name, false))+"(), false);\r\n");
         write("      "+comp+"Extras(\""+name+"\", element.get"+upFirst(getElementName(name, false))+"(), false);\r\n");
-      } else  
-        write("      "+comp+"(\""+name+"\", element.get"+upFirst(getElementName(name, false))+"());\r\n");
+      } else {
+          if ( super.isResource( tn ) ) {
+              write("      "+comp+"(\""+name+"\", element.get"+upFirst(getElementName(name, false))+"().asReference() ); \r\n" );
+          } else {
+              write("      "+comp+"(\""+name+"\", element.get"+upFirst(getElementName(name, false))+"());\r\n");
+          }
       }
     }
+  }
 
   private boolean isPrimitive(ElementDefn e) {
     return definitions.hasPrimitiveType(e.typeCode()) || e.typeCode().equals("idref");
@@ -662,5 +669,7 @@ private String leaf(String tn) {
       return name.replace("[x]", "");
   }
 
-  
+    protected boolean isResource( String type ) {
+        return type.startsWith( "Resource(" );
+    }
 }

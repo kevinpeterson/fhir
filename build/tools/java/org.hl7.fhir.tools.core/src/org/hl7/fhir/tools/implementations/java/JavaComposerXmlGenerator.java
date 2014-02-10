@@ -68,7 +68,7 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
     super(out);
   }
 
-  public void generate(Definitions definitions, String version, Date genDate) throws Exception {
+  public void generate(Definitions definitions, Map<String,String> aliases , String version, Date genDate) throws Exception {
 
     this.definitions = definitions;
     
@@ -80,7 +80,7 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
       generatePrimitive(dc);
     
     for (ElementDefn n : definitions.getInfrastructure().values()) {
-      generate(n, JavaGenClass.Structure);
+      generate(n, JavaGenClass.Structure, aliases);
 //      String t = upFirst(n.getName());
 //      regt.append("    else if (type instanceof "+t+")\r\n       compose"+n.getName()+"(prefix+\""+n.getName()+"\", ("+t+") type);\r\n");
     }
@@ -100,7 +100,7 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
 //          }
 //        }
       } else {
-        generate(n, JavaGenClass.Type);
+        generate(n, JavaGenClass.Type, aliases);
         String nn = javaClassName(n.getName());
         if (nn.equals("ResourceReference"))
           regtn.append("    else if (type instanceof "+nn+")\r\n       compose"+nn+"(prefix+\"Resource\", ("+nn+") type);\r\n");
@@ -111,12 +111,12 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
     }
 
     for (DefinedCode n : definitions.getConstraints().values()) {
-      generateConstraint(n);
+      generateConstraint(n, aliases);
       regtp.append("    else if (type instanceof "+n.getCode()+")\r\n       compose"+n.getCode()+"(prefix+\""+n.getCode()+"\", ("+n.getCode()+") type);\r\n");
 //      regn.append("    if (xpp.getName().equals(prefix+\""+n.getCode()+"\"))\r\n      return true;\r\n");
     }
     for (ElementDefn n : definitions.getStructures().values()) {
-      generate(n, JavaGenClass.Structure);
+      generate(n, JavaGenClass.Structure, aliases);
       regtn.append("    else if (type instanceof "+n.getName()+")\r\n       compose"+n.getName()+"(prefix+\""+n.getName()+"\", ("+n.getName()+") type);\r\n");
 //      regn.append("    if (xpp.getName().equals(prefix+\""+n.getName()+"\"))\r\n      return true;\r\n");
     }
@@ -125,7 +125,7 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
 
     for (String s : definitions.sortedResourceNames()) {
       ResourceDefn n = definitions.getResources().get(s);
-      generate(n.getRoot(), JavaGenClass.Resource);
+      generate(n.getRoot(), JavaGenClass.Resource, aliases);
       String nn = javaClassName(n.getName());
       reg.append("    else if (resource instanceof "+nn+")\r\n      compose"+nn+"(\""+n.getName()+"\", ("+nn+")resource);\r\n");
 //      regn.append("    if (xpp.getName().equals(prefix+\""+n.getName()+"\"))\r\n      return true;\r\n");
@@ -264,7 +264,7 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
 //
 //  }
 
-  private void generate(ElementDefn n, JavaGenClass type) throws Exception {
+  private void generate(ElementDefn n, JavaGenClass type, Map<String,String> aliases ) throws Exception {
     typeNames.clear();
     typeNameStrings.clear();
     enums.clear();
@@ -277,10 +277,10 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
     }
     context = nn;
 
-    genInner(n, type);
+    genInner(n, type, aliases);
     
     for (ElementDefn e : strucs) {
-      genInner(e, type == JavaGenClass.Resource ?  JavaGenClass.Backbone : JavaGenClass.Structure);
+      genInner(e, type == JavaGenClass.Resource ?  JavaGenClass.Backbone : JavaGenClass.Structure, aliases);
     }
 
   }
@@ -292,7 +292,7 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
       return name;
   }
 
-  private void generateConstraint(DefinedCode cd) throws Exception {
+  private void generateConstraint(DefinedCode cd, Map<String,String> aliases ) throws Exception {
     typeNames.clear();
     typeNameStrings.clear();
     enums.clear();
@@ -307,15 +307,15 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
         scanNestedTypes(n, n.getName(), e);
     }
 
-    genInner(n, JavaGenClass.Constraint);
+    genInner(n, JavaGenClass.Constraint, aliases);
     
     for (ElementDefn e : strucs) {
-      genInner(e, JavaGenClass.Constraint);
+      genInner(e, JavaGenClass.Constraint, aliases);
     }
 
   }
 
-  private void genInner(ElementDefn n, JavaGenClass type) throws IOException, Exception {
+  private void genInner(ElementDefn n, JavaGenClass type, Map<String,String> aliases ) throws IOException, Exception {
     String tn = typeNames.containsKey(n) ? typeNames.get(n) : javaClassName(n.getName());
     
     write("  private void compose"+upFirst(tn).replace(".", "").replace("<", "_").replace(">", "")+"(String name, "+tn+" element) throws Exception {\r\n");
@@ -347,7 +347,7 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
     
     for (ElementDefn e : n.getElements()) {
       if (!e.typeCode().equals("xml:lang") && !e.isXmlAttribute()) 
-        genElement(n, e, type);
+        genElement(n, e, type, aliases );
     }
     write("      xml.close(FHIR_NS, name);\r\n");
     write("    }\r\n");    
@@ -362,7 +362,7 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
     return tn.substring(tn.indexOf('.')+1);
   }
 
-  private void genElement(ElementDefn root, ElementDefn e, JavaGenClass type) throws Exception {
+  private void genElement(ElementDefn root, ElementDefn e, JavaGenClass type, Map<String,String> aliases ) throws Exception {
     String name = e.getName();
     if (name.endsWith("[x]") || name.equals("[type]")) {
       String en = name.endsWith("[x]") && !name.equals("[x]") ? name.replace("[x]", "") : "value";
@@ -412,8 +412,14 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
   	    if (en == null) {
           if (tn.equalsIgnoreCase("string"))
             tn = "String_";
-          write("      for ("+(tn.contains("(") ? PrepGenericTypeName(tn) : upFirst(tn))+" e : element.get"+upFirst(getElementName(name, false))+"()) \r\n");
-          write("        "+comp+"(\""+name+"\", e);\r\n");
+          if ( super.isResource( tn ) ) {
+              String extractor = ".asReference()";
+              write("      for ("+ determineType( typeNames, e, aliases ) +" e : element.get"+upFirst(getElementName(name, false))+"()) \r\n");
+              write("        "+comp+"(\""+name+"\", e" + extractor + ");\r\n");
+          } else {
+            write("      for ("+(tn.contains("(") ? PrepGenericTypeName(tn) : upFirst(tn))+" e : element.get"+upFirst(getElementName(name, false))+"()) \r\n");
+            write("        "+comp+"(\""+name+"\", e);\r\n");
+          }
   	    } else {
             write("        for (Enumeration<"+prepEnumName(en)+"> e : element.get"+upFirst(getElementName(name, false))+"()) \r\n");
             write("          composeEnumeration(\""+name+"\", e, new "+context+"."+upFirst(en.substring(en.indexOf(".")+2))+"EnumFactory());\r\n");
@@ -424,7 +430,11 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
         write("        composeEnumeration(\""+name+"\", element.get"+upFirst(getElementName(name, false))+"(), new "+mainName+"."+upFirst(en.substring(en.indexOf(".")+2))+"EnumFactory());\r\n");
 //        write("        composeString(\""+name+"\", element.get"+upFirst(getElementName(name, false))+"().toCode());\r\n");        
       } else {
-        write("      "+comp+"(\""+name+"\", element.get"+upFirst(getElementName(name, false))+"());\r\n");
+          String extractor = "";
+          if ( ! e.getTypes().isEmpty() && e.getTypes().get( 0 ).isResourceReference() ) {
+              extractor = ".asReference()";
+          }
+        write("      "+comp+"(\""+name+"\", element.get"+upFirst(getElementName(name, false))+"()" + extractor + ");\r\n");
       }
     }
   }
@@ -618,5 +628,8 @@ public class JavaComposerXmlGenerator extends JavaBaseGenerator {
 
   }
 
-  
+    protected boolean isResource( String type ) {
+        return type.startsWith( "Resource(" );
+    }
+
 }

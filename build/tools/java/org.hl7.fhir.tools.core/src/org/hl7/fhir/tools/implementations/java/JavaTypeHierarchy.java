@@ -19,7 +19,7 @@ public class JavaTypeHierarchy {
         types.put( "Any", new Node( new Type( "Any", Collections.EMPTY_SET ) ) );
     }
 
-    public void add( Set<String> compositeType ) {
+    public void add( Set<String> compositeType, Map<String,String> aliases ) {
 
         List<String> sups = new ArrayList<String>( compositeType );
         Collections.sort( sups );
@@ -27,7 +27,7 @@ public class JavaTypeHierarchy {
 
         Type t;
         if ( compositeType.size() > 1 ) {
-            t = new Type( getName( compositeType ), compositeType );
+            t = new Type( getName( compositeType, aliases ), compositeType );
         } else {
             t = new Type( compositeType.iterator().next(), compositeType );
         }
@@ -49,11 +49,22 @@ public class JavaTypeHierarchy {
         }
     }
 
-    private String getName( Set<String> compositeType ) {
-        Iterator<String> iter = compositeType.iterator();
+    protected static String getName( Collection<String> compositeType, Map<String, String> aliases ) {
+        List<String> typeNames = new ArrayList<String>( compositeType );
+        Collections.sort( typeNames );
+        if ( aliases.containsKey( typeNames ) ) {
+            return aliases.get( typeNames );
+        }
+        Iterator<String> iter = typeNames.iterator();
         String name = iter.next();
         while ( iter.hasNext() ) {
             name += "_or_" + iter.next();
+        }
+        if ( name.length() > 150 ) {
+            if ( ! aliases.containsKey( name ) ) {
+                aliases.put( name, "ResourceTypeUnion" + aliases.size() );
+            }
+            return aliases.get( name );
         }
         return name;
     }
