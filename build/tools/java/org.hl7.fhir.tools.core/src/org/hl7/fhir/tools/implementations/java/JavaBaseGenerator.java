@@ -30,6 +30,10 @@ POSSIBILITY OF SUCH DAMAGE.
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.definitions.model.TypeRef;
@@ -95,4 +99,46 @@ public class JavaBaseGenerator extends OutputStreamWriter {
 	protected String getTitle(String name) {
 		return Utilities.noString(name) ? "Value" : name.substring(0, 1).toUpperCase()+ name.substring(1);
 	}
+
+    protected String upFirst(String name) {
+        return name.substring(0,1).toUpperCase()+name.substring(1);
+    }
+
+    protected boolean isResource( String type ) {
+        return "ResourceReference".equals( type );
+    }
+
+    protected String determineType( Map<ElementDefn, String> typeNames, ElementDefn e, Map<String,String> aliases ) {
+        String type = typeNames.get( e );
+        if ( isResource( type ) ) {
+            if ( ! e.getTypes().isEmpty() && e.getTypes().get( 0 ).hasParams() ) {
+                List<String> pTypes = new ArrayList( e.getTypes().get( 0 ).getParams() );
+                Collections.sort( pTypes );
+                String inftName = JavaGenerator.packageName + ".intf." + JavaTypeHierarchy.getName( pTypes, aliases );
+                return inftName;
+            } else {
+                return type;
+            }
+        } else {
+            return type;
+        }
+    }
+
+    protected String determineConcreteType( Map<ElementDefn, String> typeNames, ElementDefn e, Map<String,String> aliases ) {
+        String type = typeNames.get( e );
+        if ( isResource( type ) ) {
+            if ( ! e.getTypes().isEmpty() && e.getTypes().get( 0 ).hasParams() ) {
+                List<String> pTypes = new ArrayList( e.getTypes().get( 0 ).getParams() );
+                Collections.sort( pTypes );
+                String inftName = JavaGenerator.packageName + ".refs." + JavaTypeHierarchy.getName( pTypes, aliases ) + "_Reference";
+                return inftName;
+            } else {
+                return type;
+            }
+        } else {
+            return type;
+        }
+    }
+
+
 }

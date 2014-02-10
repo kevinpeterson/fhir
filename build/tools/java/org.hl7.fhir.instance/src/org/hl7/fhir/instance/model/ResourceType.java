@@ -50,7 +50,9 @@ public enum ResourceType {
     AdverseReaction,
     ImagingStudy,
     DiagnosticOrder,
-    Binary;
+    Binary,
+    Appointment
+    ;
 
     public String getPath() {;
       switch (this) {
@@ -151,8 +153,10 @@ public enum ResourceType {
     case DiagnosticOrder:
       return "diagnosticorder";
     case Binary:
-      return "binary";
-    }
+        return "binary";
+    case Appointment:
+        return "appointment";
+      }
       return null;
   }
 

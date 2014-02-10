@@ -47,6 +47,7 @@ import org.hl7.fhir.instance.model.Uri;
 import org.hl7.fhir.instance.model.ValueSet;
 import org.hl7.fhir.instance.model.ValueSet.ValueSetDefineConceptComponent;
 import org.hl7.fhir.instance.model.ValueSet.ValueSetExpansionContainsComponent;
+import org.hl7.fhir.instance.model.refs.Organization_Reference;
 import org.hl7.fhir.instance.utils.ConceptLocator;
 import org.hl7.fhir.instance.utils.ConceptLocator.ValidationResult;
 import org.hl7.fhir.instance.utils.ValueSetExpansionCache;
@@ -1181,7 +1182,7 @@ public class InstanceValidator extends BaseValidator {
 	  checkFixedValue(errors, path+".system", XMLUtil.getNamedChild(focus, "system"), fixed.getSystem(), "system");
 	  checkFixedValue(errors, path+".value", XMLUtil.getNamedChild(focus, "value"), fixed.getValue(), "value");
 	  checkFixedValue(errors, path+".period", XMLUtil.getNamedChild(focus, "period"), fixed.getPeriod(), "period");
-	  checkFixedValue(errors, path+".assigner", XMLUtil.getNamedChild(focus, "assigner"), fixed.getAssigner(), "assigner");
+	  checkFixedValue(errors, path+".assigner", XMLUtil.getNamedChild(focus, "assigner"), ( Organization_Reference ) fixed.getAssigner(), "assigner");
   }
 
 	private void checkCoding(List<ValidationMessage> errors, String path, Element focus, Coding fixed) {

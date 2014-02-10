@@ -37,6 +37,7 @@ import org.hl7.fhir.instance.model.OperationOutcome.OperationOutcomeIssueCompone
 import org.hl7.fhir.instance.model.Patient;
 import org.hl7.fhir.instance.model.Resource;
 import org.hl7.fhir.instance.model.ResourceReference;
+import org.hl7.fhir.instance.model.refs.Patient_Reference;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -676,7 +677,7 @@ public class FHIRSimpleClientTest {
 		Condition condition = null;
 		try {
 			condition = new Condition();
-			ResourceReference patientReference = new ResourceReference();
+			Patient_Reference patientReference = new Patient_Reference();
 			patientReference.setReferenceSimple("patient/@"+getEntryId(patientEntry));
 			condition.setSubject(patientReference);
 			condition.setCode(conditionCode);

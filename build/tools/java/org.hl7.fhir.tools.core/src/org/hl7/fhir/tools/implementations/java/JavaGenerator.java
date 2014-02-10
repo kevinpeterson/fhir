@@ -35,8 +35,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -69,9 +72,13 @@ import org.hl7.fhir.utilities.Logger.LogMessageType;
 public class JavaGenerator extends BaseGenerator implements PlatformGenerator {
 
   private static final boolean IN_PROCESS = false;
-  
+  public static final String packageName   =  "org.hl7.fhir.instance.model";
+  private Map<String,String> aliases = new HashMap<String, String>( );
+
   private String rootDir;
   private String javaDir;
+  private String javaIntfDir;
+  private String javaRefsDir;
   private String javaParserDir;
   private Definitions definitions;
   private Logger logger;
@@ -89,48 +96,92 @@ public String getDescription() {
   @Override
 public void generate(Definitions definitions, String destDir, String implDir, String version, Date genDate, Logger logger, String svnRevision) throws Exception {
     char sl = File.separatorChar;
-    javaDir       =  implDir+"org.hl7.fhir.instance"+sl+"src"+ sl+"org"+sl+"hl7"+sl+"fhir"+sl+"instance"+sl+"model"+sl;
+    javaDir       =  implDir+"org.hl7.fhir.instance"+sl+"src"+ sl + packageName.replace( '.', sl ) + sl;
+    javaIntfDir   =  implDir+"org.hl7.fhir.instance"+sl+"src"+ sl  + packageName.replace( '.', sl ) + sl + "intf" + sl;
+    javaRefsDir   =  implDir+"org.hl7.fhir.instance"+sl+"src"+ sl  + packageName.replace( '.', sl ) + sl + "refs" + sl;
     javaParserDir =  implDir+"org.hl7.fhir.instance"+sl+"src"+sl+"org"+sl+"hl7"+sl+"fhir"+sl+"instance"+sl+"formats"+sl;
     this.definitions = definitions;
     this.logger = logger;
 
     for (String n : definitions.getDeletedResources()) {
-      File f = new File(implDir+"org.hl7.fhir.instance"+sl+"src"+ sl+"org"+sl+"hl7"+sl+"fhir"+sl+"instance"+sl+"model"+sl+n+".java");
-      if (f.exists())
+      File f = new File(implDir+"org.hl7.fhir.instance"+sl+"src"+ sl + packageName.replace( '.', sl ) + sl + n + ".java");
+      if (f.exists()) {
         f.delete();
+      }
     }
-    JavaFactoryGenerator jFactoryGen = new JavaFactoryGenerator(new FileOutputStream(javaDir+"ResourceFactory.java"));
-    
+    File i = new File(implDir+"org.hl7.fhir.instance"+sl+"src"+ sl + packageName.replace( '.', sl ) + sl + "intf");
+      if (i.exists() && i.isDirectory()) {
+          i.delete();
+      }
+    File r = new File(implDir+"org.hl7.fhir.instance"+sl+"src"+ sl + packageName.replace( '.', sl ) + sl + "refs");
+      if (r.exists() && r.isDirectory()) {
+          r.delete();
+      }
+
+      File intfDir = new File( javaIntfDir );
+      if ( ! intfDir.exists() ) {
+          intfDir.mkdirs();
+      }
+      File refsDir = new File( javaRefsDir );
+      if ( ! refsDir.exists() ) {
+          refsDir.mkdirs();
+      }
+
+      JavaFactoryGenerator jFactoryGen = new JavaFactoryGenerator(new FileOutputStream(javaDir+"ResourceFactory.java"));
+
     generateResourceTypeEnum();
+
+    JavaTypeHierarchy hierarchy = JavaTypeHierarchyGenerator.createHierarchy( definitions, aliases );
+
     for (String n : definitions.getResources().keySet()) {
-      ResourceDefn root = definitions.getResourceByName(n); 
-      JavaResourceGenerator jrg = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName())+".java"), definitions);
-      jrg.generate(root.getRoot(), javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Resource, null, genDate, version);
+      ResourceDefn root = definitions.getResourceByName(n);
+      String javaName = javaClassName(root.getName(), aliases);
+      JavaResourceGenerator jrg = new JavaResourceGenerator(new FileOutputStream(javaDir+javaName+".java"), definitions);
+      jrg.generate(root.getRoot(), packageName, javaName, definitions.getBindings(), JavaGenClass.Resource, null, aliases, genDate, version);
       jrg.close();
+
+      JavaResourceInterfaceGenerator jig = new JavaResourceInterfaceGenerator(new FileOutputStream(javaIntfDir + javaName+"Resource.java"), definitions);
+      jig.generate(root.getRoot(), packageName, javaName, definitions.getBindings(), JavaGenClass.Resource, null, aliases, genDate, version);
+      jig.close();
+
       jFactoryGen.registerResource(n,  root.getName());
     }
+
+    for ( String typeKey : hierarchy.getTypes().keySet() ) {
+      boolean primitive = definitions.getResources().containsKey( typeKey );
+      JavaTypeInterfaceGenerator jtg = new JavaTypeInterfaceGenerator(new FileOutputStream(javaIntfDir + javaClassName( typeKey, aliases ) + ".java"));
+      jtg.generate(packageName, javaClassName( typeKey, aliases ), primitive, hierarchy.getAncestors( typeKey ), genDate, version );
+      jtg.close();
+
+      ElementDefn root = definitions.getTypes().get( "ResourceReference" );
+      JavaResourceReferenceGenerator jrg = new JavaResourceReferenceGenerator(new FileOutputStream(javaRefsDir + javaClassName( typeKey, aliases ) + "_Reference.java"));
+      jrg.generate(root, packageName, javaClassName( typeKey, aliases ), primitive, hierarchy.getAncestors( typeKey ), genDate, version );
+      jrg.close();
+    }
+
+
 
     generateResourceTypeEnum();
     for (ResourceDefn resource : definitions.getFutureResources().values()) {
       ElementDefn e = new ElementDefn();
       e.setName(resource.getName());
-      JavaResourceGenerator jrg = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(e.getName())+".java"), definitions);
-      	jrg.generate(e, javaClassName(e.getName()), definitions.getBindings(), JavaGenClass.Resource, null, genDate, version);
+      JavaResourceGenerator jrg = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(e.getName(), aliases)+".java"), definitions);
+      	jrg.generate(e, packageName, javaClassName(e.getName(), aliases), definitions.getBindings(), JavaGenClass.Resource, null, aliases, genDate, version);
       	jrg.close();
       jFactoryGen.registerResource(resource.getName(),  e.getName());
     }
 
     for (String n : definitions.getInfrastructure().keySet()) {
-      ElementDefn root = definitions.getInfrastructure().get(n); 
-      JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName())+".java"), definitions);
-      jgen.generate(root, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Structure, null, genDate, version);
+      ElementDefn root = definitions.getInfrastructure().get(n);
+      JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName(), aliases)+".java"), definitions);
+      jgen.generate(root, packageName, javaClassName(root.getName(), aliases), definitions.getBindings(), JavaGenClass.Structure, null, aliases, genDate, version);
       jgen.close();
       jFactoryGen.registerType(n,  root.getName());
     }
     for (String n : definitions.getTypes().keySet()) {
-      ElementDefn root = definitions.getTypes().get(n); 
-      JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName())+".java"), definitions);
-      jgen.generate(root, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Type, null, genDate, version);
+      ElementDefn root = definitions.getTypes().get(n);
+      JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName(), aliases)+".java"), definitions);
+      jgen.generate(root, packageName, javaClassName(root.getName(), aliases), definitions.getBindings(), JavaGenClass.Type, null, aliases, genDate, version);
       jgen.close();
       if (root.typeCode().equals("GenericType")) {
         for (TypeRef td : definitions.getKnownTypes()) {
@@ -144,29 +195,29 @@ public void generate(Definitions definitions, String destDir, String implDir, St
         jFactoryGen.registerType(n,  root.getName());
     }
     for (DefinedCode cd : definitions.getConstraints().values()) {
-      ElementDefn root = definitions.getTypes().get(cd.getComment()); 
-      JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(cd.getCode())+".java"), definitions);
-      jgen.generate(root, javaClassName(cd.getCode()), definitions.getBindings(), JavaGenClass.Constraint, cd, genDate, version);
-      jFactoryGen.registerType(cd.getCode(), cd.getCode()); 
+      ElementDefn root = definitions.getTypes().get(cd.getComment());
+      JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(cd.getCode(), aliases)+".java"), definitions);
+      jgen.generate(root, packageName, javaClassName(cd.getCode(), aliases), definitions.getBindings(), JavaGenClass.Constraint, cd, aliases, genDate, version);
+      jFactoryGen.registerType(cd.getCode(), cd.getCode());
       jgen.close();
     }
-    
+
     for (String n : definitions.getStructures().keySet()) {
-      ElementDefn root = definitions.getStructures().get(n); 
-      JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName())+".java"), definitions);
-      jgen.generate(root, javaClassName(root.getName()), definitions.getBindings(), JavaGenClass.Type, null, genDate, version);
+      ElementDefn root = definitions.getStructures().get(n);
+      JavaResourceGenerator jgen = new JavaResourceGenerator(new FileOutputStream(javaDir+javaClassName(root.getName(), aliases)+".java"), definitions);
+      jgen.generate(root, packageName, javaClassName(root.getName(), aliases), definitions.getBindings(), JavaGenClass.Type, null, aliases, genDate, version);
       jFactoryGen.registerType(n,  root.getName());
       jgen.close();
     }
-    
+
     JavaParserXmlGenerator jParserGenX = new JavaParserXmlGenerator(new FileOutputStream(javaParserDir+"XmlParser.java"));
-    jParserGenX.generate(definitions, version, genDate);    
+    jParserGenX.generate(definitions, aliases, version, genDate);
     JavaParserJsonGenerator jParserGenJ = new JavaParserJsonGenerator(new FileOutputStream(javaParserDir+"JsonParser.java"));
-    jParserGenJ.generate(definitions, version, genDate);    
+    jParserGenJ.generate(definitions, aliases, version, genDate);
     JavaComposerXmlGenerator jComposerGen = new JavaComposerXmlGenerator(new FileOutputStream(javaParserDir+"XmlComposer.java"));
-    jComposerGen.generate(definitions, version, genDate);    
+    jComposerGen.generate(definitions, aliases, version, genDate);
     JavaComposerJsonGenerator jjComposerGen = new JavaComposerJsonGenerator(new FileOutputStream(javaParserDir+"JsonComposer.java"));
-    jjComposerGen.generate(definitions, version, genDate);    
+    jjComposerGen.generate(definitions, aliases, version, genDate);
     jFactoryGen.generate(version, genDate);
     ZipGenerator zip = new ZipGenerator(destDir+"java.zip");
     zip.addFiles(implDir+"org.hl7.fhir.instance"+sl+"src"+ sl+"org"+sl+"hl7"+sl+"fhir"+sl+"instance"+sl+"model"+sl, "org/hl7/fhir/instance/model/", ".java", null);
@@ -177,7 +228,7 @@ public void generate(Definitions definitions, String destDir, String implDir, St
     zip.addFileName("imports"+sl+"xpp3-1.1.3.4.O.jar", implDir+sl+"imports"+sl+"xpp3-1.1.3.4.O.jar", false);
     zip.addFileName("imports"+sl+"gson-2.2.4.jar", implDir+sl+"imports"+sl+"gson-2.2.4.jar", false);
     zip.addFileName("imports"+sl+"commons-codec-1.3.jar", implDir+sl+"imports"+sl+"commons-codec-1.3.jar", false);
-    
+
     zip.close();
     jjComposerGen.close();
     jComposerGen.close();
@@ -188,7 +239,7 @@ public void generate(Definitions definitions, String destDir, String implDir, St
 
   private void generateResourceTypeEnum() throws Exception {
 
-    OutputStreamWriter output = new OutputStreamWriter(new FileOutputStream(javaDir+"ResourceType.java")); 
+    OutputStreamWriter output = new OutputStreamWriter(new FileOutputStream(javaDir+"ResourceType.java"));
     output.write("package org.hl7.fhir.instance.model;\r\n");
     output.write("\r\n");
     output.write("public enum ResourceType {\r\n");
@@ -211,8 +262,8 @@ public void generate(Definitions definitions, String destDir, String implDir, St
       for (String n : definitions.getFutureResources().keySet()) {
         output.write("    case "+n+":\r\n");
         output.write("      return \""+n.toLowerCase()+"\";\r\n");
-      }    
-    
+      }
+
       output.write("    case Binary:\r\n");
       output.write("      return \"binary\";\r\n");
     output.write("    }\r\n      return null;\r\n");
@@ -222,12 +273,16 @@ public void generate(Definitions definitions, String destDir, String implDir, St
 
   }
 
-  private String javaClassName(String name) {
-    if (name.equals("List"))
-      return "List_";
-    else 
-      return name;
-  }
+    public static String javaClassName(String name, Map<String, String> aliases ) {
+        if ( aliases.containsKey( name ) ) {
+            return aliases.get( name );
+        }
+        if (name.equals("List")) {
+            return "List_";
+        } else {
+            return name;
+        }
+    }
 
   private String getTitle(String n) {
     return n.substring(0,1).toUpperCase()+n.substring(1);
@@ -246,7 +301,7 @@ public boolean isECoreGenerator() {
   @Override
 public void generate(org.hl7.fhir.definitions.ecore.fhir.Definitions definitions, String destDir,
       String implDir, Logger logger, String svnRevision) throws Exception {
-    throw new UnsupportedOperationException("Java generator uses ElementDefn-style definitions.");	
+    throw new UnsupportedOperationException("Java generator uses ElementDefn-style definitions.");
   }
 
   @Override
@@ -257,12 +312,12 @@ public boolean doesCompile() {
   public boolean c(String name) {
 	  char sc = File.separatorChar;
 
-	  
-	  
+
+
     int r = ToolProvider.getSystemJavaCompiler().run(null, null, null, rootDir+"implementations"+sc+"java"+sc+"org.hl7.fhir.instance"+sc+"src"+sc+"org"+sc+"hl7"+sc+"fhir"+sc+"instance"+sc+"model"+sc+"Type.java");
     return r == 0;
   }
-  
+
   @Override
 public boolean compile(String rootDir, List<String> errors, Logger logger) throws Exception {
     this.rootDir = rootDir;
@@ -271,13 +326,13 @@ public boolean compile(String rootDir, List<String> errors, Logger logger) throw
 
     addSourceFiles(classes, rootDir + "implementations"+sc+"java"+sc+"org.hl7.fhir.utilities");
     addSourceFiles(classes, rootDir + "implementations"+sc+"java"+sc+"org.hl7.fhir.instance");
-  
+
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     if (compiler == null)
       throw new Exception("Cannot continue build process as java compilation services are not available. Check that you are executing the build process using a jdk, not a jre");
-    
+
     StandardJavaFileManager fileManager = compiler.getStandardFileManager(null, null, null);
-    
+
     Iterable<? extends JavaFileObject> units = fileManager.getJavaFileObjectsFromFiles(classes);
     DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<JavaFileObject>();
     List<String> options = new ArrayList<String>();
@@ -300,7 +355,7 @@ public boolean compile(String rootDir, List<String> errors, Logger logger) throw
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, ".");
     manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, "org.hl7.fhir.instance.test.ToolsHelper");
-    
+
     JarOutputStream jar = new JarOutputStream(new FileOutputStream(rootDir+sc+"publish"+sc+"org.hl7.fhir.validator.jar"), manifest);
     List<String> names = new ArrayList<String>();
     names.add("META-INF/");
@@ -308,16 +363,16 @@ public boolean compile(String rootDir, List<String> errors, Logger logger) throw
     AddJarToJar(jar, rootDir+"tools"+sc+"java"+sc+"imports"+sc+"xpp3-1.1.3.4.O.jar", names);
     AddJarToJar(jar, rootDir+"tools"+sc+"java"+sc+"imports"+sc+"gson-2.2.4.jar", names);
     AddJarToJar(jar, rootDir+"tools"+sc+"java"+sc+"imports"+sc+"commons-codec-1.3.jar", names);
-    
+
     // by adding source first, we add all the newly built classes, and these are not updated when the older stuff is included
     AddToJar(jar, new File(rootDir+"implementations"+sc+"java"+sc+"org.hl7.fhir.instance"+sc+"src"), (rootDir+"implementations"+sc+"java"+sc+"org.hl7.fhir.instance"+sc+"src"+sc).length(), names);
     AddToJar(jar, new File(rootDir+"implementations"+sc+"java"+sc+"org.hl7.fhir.utilities"+sc+"src"), (rootDir+"implementations"+sc+"java"+sc+"org.hl7.fhir.utilities"+sc+"src"+sc).length(), names);
     jar.close();
-    
+
     return result;
   }
 
-  
+
   private void addSourceFiles(List<File> classes, String name) {
     File f = new File(name);
     if (f.isDirectory()) {
@@ -327,7 +382,7 @@ public boolean compile(String rootDir, List<String> errors, Logger logger) throw
     } else if (name.endsWith(".java")) {
       classes.add(f);
     }
-    
+
   }
 
   private void AddJarToJar(JarOutputStream jar, String name, List<String> names) throws Exception {
@@ -354,7 +409,7 @@ public boolean compile(String rootDir, List<String> errors, Logger logger) throw
   private void AddToJar(JarOutputStream jar, File file, int rootLen, List<String> names) throws Exception {
     if (!file.exists())
       return;
-    
+
     if (file.isDirectory()) {
       String name = file.getPath().replace("\\", "/");
       if (!name.isEmpty())
@@ -369,10 +424,10 @@ public boolean compile(String rootDir, List<String> errors, Logger logger) throw
           jar.putNextEntry(entry);
           jar.closeEntry();
         }
-      } 
+      }
       for (File f: file.listFiles())
         if (f.getName().endsWith(".class") || f.getName().endsWith(".jar") || f.isDirectory())
-          AddToJar(jar, f, rootLen, names);    
+          AddToJar(jar, f, rootLen, names);
     } else {
       String n = file.getPath().substring(rootLen).replace("\\", "/");
       if (!names.contains(n)) {
@@ -396,7 +451,7 @@ public boolean compile(String rootDir, List<String> errors, Logger logger) throw
     }
   }
 
- 
+
   @Override
 public boolean doesTest() {
     return true;
@@ -406,14 +461,14 @@ public boolean doesTest() {
 public void loadAndSave(String rootDir, String sourceFile, String destFile) throws Exception {
     // execute the jar file javatest.jar
     // it will produce either the specified output file, or [output file].err with an exception
-    // 
+    //
     File file = new CSFile(destFile);
     if (file.exists())
       file.delete();
     file = new CSFile(destFile+".err");
     if (file.exists())
       file.delete();
-    
+
     List<String> command = new ArrayList<String>();
     command.add("java");
     command.add("-jar");
@@ -437,13 +492,13 @@ public void loadAndSave(String rootDir, String sourceFile, String destFile) thro
     // for debugging: do it in process
     if (IN_PROCESS) {
       ToolsHelper t = new ToolsHelper();
-      String[] cmds = new String[] {"json", sourceFile, destFile};    
+      String[] cmds = new String[] {"json", sourceFile, destFile};
       return t.executeJson(cmds);
     } else {
 
       // execute the jar file javatest.jar
       // it will produce either the specified output file, or [output file].err with an exception
-      // 
+      //
       File file = new CSFile(destFile);
       if (file.exists())
         file.delete();
@@ -467,20 +522,20 @@ public void loadAndSave(String rootDir, String sourceFile, String destFile) thro
       String s;
       while ((s = stdError.readLine()) != null) {
         System.err.println(s);
-      }    
+      }
 
       process.waitFor();
       if (new File(destFile+".err").exists())
         throw new Exception(TextFile.fileToString(destFile+".err"));
       if (!(new File(destFile+".tmp").exists()))
-        throw new Exception("Neither output nor error file created doing json conversion");    
+        throw new Exception("Neither output nor error file created doing json conversion");
       if (new File(destFile+".tmp").length() == 0)
-        throw new Exception("Output file '"+destFile+".tmp' empty");  
+        throw new Exception("Output file '"+destFile+".tmp' empty");
       String txt = TextFile.fileToString(destFile+".tmp");
       new File(destFile+".tmp").delete();
       return txt;
-      
-    } 
+
+    }
   }
 
   @Override
@@ -491,14 +546,14 @@ public void loadAndSave(String rootDir, String sourceFile, String destFile) thro
     if (file.exists())
       file.delete();
     TextFile.stringToFile(fragments, file.getAbsolutePath());
-    
+
     File filed = File.createTempFile("temp", ".txt");
     filed.deleteOnExit();
     if (filed.exists())
       filed.delete();
-    
+
     if (inProcess) {
-      new ToolsHelper().executeFragments(new String[] {"fragments", file.getAbsolutePath(), filed.getAbsolutePath()}); 
+      new ToolsHelper().executeFragments(new String[] {"fragments", file.getAbsolutePath(), filed.getAbsolutePath()});
     } else {
       List<String> command = new ArrayList<String>();
       command.add("java");
