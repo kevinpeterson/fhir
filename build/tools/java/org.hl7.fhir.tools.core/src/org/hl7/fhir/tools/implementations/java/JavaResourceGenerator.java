@@ -27,15 +27,6 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 */
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.hl7.fhir.definitions.Config;
 import org.hl7.fhir.definitions.model.BindingSpecification;
 import org.hl7.fhir.definitions.model.DefinedCode;
@@ -43,6 +34,11 @@ import org.hl7.fhir.definitions.model.Definitions;
 import org.hl7.fhir.definitions.model.ElementDefn;
 import org.hl7.fhir.tools.implementations.GeneratorUtils;
 import org.hl7.fhir.utilities.Utilities;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.*;
 
 public class JavaResourceGenerator extends JavaBaseGenerator {
 
@@ -78,7 +74,7 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 		enumNames.clear();
 		this.clss = clss;
 
-		write("package org.hl7.fhir.instance.model;\r\n");
+        write("package org.hl7.fhir.instance.model;\r\n");
 		write("\r\n/*\r\n"+Config.FULL_LICENSE_CODE+"*/\r\n\r\n");
 		write("// Generated on "+Config.DATE_FORMAT().format(genDate)+" for FHIR v"+version+"\r\n\r\n");
     if (clss != JavaGenClass.Constraint) {
@@ -110,6 +106,16 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
 		else
 			write("public class "+upFirst(name)+" extends Type {\r\n");
 		write("\r\n");
+
+        if(root.getName().equals("ResourceReference")){
+            write(" private String uri;\r\n");
+            write(" public String getUri() {\r\n");
+            write("     return this.uri;\r\n");
+            write(" }\r\n");
+            write(" public void setUri(String uri) {\r\n");
+            write("     this.uri = uri;\r\n");
+            write(" }\r\n");
+        }
 
 		if (clss != JavaGenClass.Constraint) {
 			for (ElementDefn e : root.getElements()) {
