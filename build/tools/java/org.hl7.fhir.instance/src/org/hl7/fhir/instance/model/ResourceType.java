@@ -1,7 +1,6 @@
 package org.hl7.fhir.instance.model;
 
 public enum ResourceType {
-    Appointment,
     Provenance,
     Condition,
     CarePlan,

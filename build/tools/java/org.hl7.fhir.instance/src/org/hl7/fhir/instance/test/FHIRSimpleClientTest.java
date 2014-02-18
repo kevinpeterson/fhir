@@ -374,38 +374,7 @@ public class FHIRSimpleClientTest {
 		}
 	}
 
-	@Test
-	public void testTransactionSuccess() {
-		try {
-			Patient patient = buildPatient();
-			AtomEntry<OperationOutcome> createdPatientEntry = testClient.create(Patient.class, patient);
-			patient.setBirthDateSimple(new DateAndTime("1966-01-10"));
-			ResourceReference patientReference = new ResourceReference();
-			AtomEntry<Patient> patientEntry = new AtomEntry<Patient>();
-			patientEntry.setResource(patient);
-			patientEntry.setId(getEntryPath(createdPatientEntry));
-			patientEntry.getLinks().put("self", createdPatientEntry.getLinks().get("self"));
-			patientReference.setReferenceSimple(getEntryPath(createdPatientEntry));
-			AdverseReaction adverseReaction = new AdverseReaction();
-			adverseReaction.setSubject(patientReference);
-			adverseReaction.setDateSimple(new DateAndTime("2013-01-10"));
-			adverseReaction.setDidNotOccurFlagSimple(false);
-			AtomEntry<OperationOutcome> createdAdverseReactionEntry = testClient.create(AdverseReaction.class, adverseReaction);
-			AtomEntry<AdverseReaction> adverseReactionEntry = new AtomEntry<AdverseReaction>();
-			adverseReactionEntry.setResource(adverseReaction);
-			adverseReactionEntry.setId(getEntryPath(createdAdverseReactionEntry));
-			adverseReactionEntry.getLinks().put("self", createdAdverseReactionEntry.getLinks().get("self"));
-			AtomFeed batchFeed = new AtomFeed();
-			batchFeed.getEntryList().add(patientEntry);
-			batchFeed.getEntryList().add(adverseReactionEntry);
-			System.out.println(new String(ClientUtils.getFeedAsByteArray(batchFeed, false, false)));
-			AtomFeed responseFeed = testClient.transaction(batchFeed);
-			assertNotNull(responseFeed);
-			assert(responseFeed.getEntryList().get(0).getResource() instanceof Patient);
-		}catch(Exception e) {
-			fail();
-		}
-	}
+	
 	
 	@Test
 	public void testSimpleTransaction1() {
