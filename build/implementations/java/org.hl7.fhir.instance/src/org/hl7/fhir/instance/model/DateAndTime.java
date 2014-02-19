@@ -1,12 +1,11 @@
 package org.hl7.fhir.instance.model;
 
+import org.hl7.fhir.utilities.Utilities;
+
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
-
-import org.hl7.fhir.utilities.Utilities;
 
 // java 1.7 can parse xml date/times, but going java 1.7 is too hard for implementers
 // javax.xml.bind.DatatypeConverter can parse xml date/times, but is not available on android. (and it's error message sucks)
@@ -170,7 +169,10 @@ public class DateAndTime {
 	}
 
 	public Calendar toCalendar() {
-		return null;
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(this.year, this.month, this.day, this.hour, this.minute, this.second);
+
+        return calendar;
 	}
 
 	public Date toDate() {
