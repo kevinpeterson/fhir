@@ -171,6 +171,7 @@ public class DateAndTime {
 	public Calendar toCalendar() {
         Calendar calendar = Calendar.getInstance();
         calendar.set(this.year, this.month, this.day, this.hour, this.minute, this.second);
+        calendar.set(Calendar.MILLISECOND, this.fraction);
 
         return calendar;
 	}
