@@ -119,6 +119,18 @@ public class JavaResourceGenerator extends JavaBaseGenerator {
             write("     this.uri = uri;\r\n");
             write(" }\r\n");
         }
+        
+        if(root.getName().equals("Period")){
+          write(" public long getDuration() {\r\n");
+          write(" if(this.getStart() == null || this.getEnd() == null){\r\n");
+          write("   return 0l;\r\n");
+          write(" } else {\r\n");
+          write("   return\r\n");
+          write("       this.getEnd().getValue().toCalendar().getTimeInMillis() -\r\n"); 
+          write("       this.getStart().getValue().toCalendar().getTimeInMillis();\r\n");
+          write("  }\r\n");
+          write(" }\r\n");
+        }
 
 		if (clss != JavaGenClass.Constraint) {
 			for (ElementDefn e : root.getElements()) {
